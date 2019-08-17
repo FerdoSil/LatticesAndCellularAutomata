@@ -1,0 +1,516 @@
+import grid utils data.vector
+
+open utils
+
+namespace grid
+
+attribute [simp, reducible]
+def Q (α : Type*) [grid α] := relative_grid.carrier α
+
+end grid
+
+open grid
+
+section cautomatons
+
+structure cautomaton (α : Type) [decidable_eq α] :=
+  (g     : agrid₀ α)
+  (empty : α)
+  (neigh : point → list point)
+  (f     : α → list α → α)
+  (ext   : bounding_box → bounding_box)
+
+end cautomatons
+
+section cautomaton_instances
+
+variables {α : Type} [decidable_eq α] [has_to_string α] (a : cautomaton α)
+
+open grid
+
+def cautomaton_to_str := grid_str a.g
+
+instance : has_to_string (cautomaton α) := ⟨cautomaton_to_str⟩
+
+instance : has_repr (cautomaton α) := ⟨cautomaton_to_str⟩
+
+end cautomaton_instances
+
+section cautomaton_quot_setoid_eq 
+
+variables {α : Type} [decidable_eq α] (a a₁ a₂ a₃ : cautomaton α)
+
+end cautomaton_quot_setoid_eq
+
+namespace cautomaton
+
+end cautomaton
+
+namespace cautomatons
+
+open cautomaton grid
+
+def neumann : point → list point
+  | ⟨x, y⟩ := 
+  [            ⟨x, y - 1⟩,
+   ⟨x - 1, y⟩,             ⟨x + 1, y⟩,
+               ⟨x, y + 1⟩             ]
+
+def moore : point → list point
+  | ⟨x, y⟩ :=
+  [ ⟨x - 1, y - 1⟩, ⟨x, y - 1⟩, ⟨x + 1, y - 1⟩,
+    ⟨x - 1, y    ⟩,             ⟨x + 1, y    ⟩,
+    ⟨x - 1, y + 1⟩, ⟨x, y + 1⟩, ⟨x + 1, y + 1⟩ ]
+
+
+def bounded_neigh {α} [grid α] (g : α)
+  (f : point → list point) (p : grid_point g) : list point := f p
+
+instance neigh_gridpoint_coe {α} [grid α] (g : α) :
+  has_coe (point → list point)
+          (grid_point g → list point) := ⟨bounded_neigh g⟩
+
+def ext_id : bounding_box → bounding_box := id
+
+def ext_one : bounding_box → bounding_box
+  | ⟨⟨x₁, y₁⟩, ⟨x₂, y₂⟩, h⟩ := ⟨⟨x₁ - 1, y₁ + 1⟩, ⟨x₂ + 1, y₂ - 1⟩,
+                                and.intro
+                                  (add_lt_add h.left dec_trivial)
+                                  (add_lt_add h.right dec_trivial)
+                               ⟩
+
+end cautomatons
+
+section cautomaton_props
+
+variables {α : Type} [decidable_eq α] (a : cautomaton α)
+
+end cautomaton_props
+
+section cautomaton_ops
+
+open function list prod
+
+variables variables {α : Type} [decidable_eq α] (a : cautomaton α)
+
+def asize := size a.g
+
+def bbox_of_caut := bbox_of_grid a.g
+
+theorem caut_eq_iff {a₁ a₂ : cautomaton α}
+  (hempty : a₁.empty = a₂.empty)
+  (hneigh : a₁.neigh = a₂.neigh)
+  (hf : a₁.f = a₂.f)
+  (hext : a₁.ext = a₂.ext) : a₁ = a₂ ↔ a₁.g = a₂.g :=
+begin
+  split; intros h,
+    {
+      rw h
+    },
+    {
+      cases a₁, cases a₂,
+      congr; cc
+    }
+end
+
+private lemma pres_unempty {α β : Type} {f} {filtered : list (α × β)}
+  {l : list ℤ}
+  (h : ¬empty_list filtered) (h₁ : l = map f ((fst ∘ unzip) filtered)) : 
+  ¬empty_list l :=
+begin
+  subst h₁,
+  rw map_empty_iff_l_empty,
+  have head_tail : ∃x xs, filtered = x :: xs,
+    from empty_list_eq_ex h,
+  cases head_tail, cases head_tail_h,
+  rw head_tail_h_h, rw unzip_fst_empty_iff_l_empty,
+  intros contra, cases contra
+end
+
+def compute_bounds : bounding_box :=
+  let bounded  := gip_g a.g in
+  let mapped   := ℘ a.g in
+  let zipped   := zip bounded mapped in
+  let filtered := filter (λx, snd x ≠ a.empty) zipped in
+  if h : empty_list filtered
+  then ⟨gbl a.g, gtr a.g, grid_is_bounding_box⟩ else
+  let unzipped := fst ∘ unzip $ filtered in
+  let xs       := map point.x unzipped in
+  let ys       := map point.y unzipped in
+  let min_x    := min_element xs (pres_unempty h $ by simp) in
+  let max_x    := max_element xs (pres_unempty h $ by simp) in
+  let min_y    := min_element ys (pres_unempty h $ by simp) in 
+  let max_y    := max_element ys (pres_unempty h $ by simp) in
+  ⟨⟨min_x, max_y + 1⟩, ⟨max_x + 1, min_y⟩,
+  begin
+    simp [(↗), min_x, max_x, min_y, max_y],
+    split;
+      {
+        rw add_comm,
+        apply int.lt_add_one_of_le,
+        apply min_elem_le_max_elem
+      }
+  end⟩
+
+lemma compute_bounds_pres_overlaid
+  : overlaid_by (compute_bounds a) ⟨gbl a.g, gtr a.g, grid_is_bounding_box⟩
+  :=
+begin
+  simp [overlaid_by, compute_bounds],
+  by_cases h :
+    empty_list
+      (filter (λ (x : point × α), x.snd ≠ a.empty)
+              (zip (gip_g (a.g)) (℘ (a.g)))),
+  {
+    rw dif_pos, simp, split; split; refl, exact h
+  },
+  {
+    rw dif_neg, split; split,
+    {
+      apply le_min_elem_of_all, intros x,
+      generalize h₂ : gip_g a.g = indices,
+      rw h₂ at h, intros h₁,
+      simp at *,
+      cases h₁ with y₁ rest,
+      cases rest with rest' h₃,
+      rw ← h₃,
+      have rest' := zunzip_filter_first_irrel rest',
+      apply rest',
+      intros y h₄,
+      rw ← h₂ at h₄,
+      have h₅ := gip_g_in_grid h₄,
+      simp [flip, is_in_grid, bbox_of_grid] at h₅,
+      exact h₅.2.1
+    },    
+    { 
+      simp [tr],
+      rw add_comm, rw ← sub_le_sub_iff_right (1 : ℤ),
+      rw add_sub_assoc, have ψ : 1 - 1 = (0 : ℤ), from dec_trivial, rw ψ,
+      rw add_zero,
+      apply max_le_elem_of_all, intros x,
+      generalize h₂ : gip_g a.g = indices,
+      rw h₂ at h, intros h₁,
+      simp at *, cases h₁ with y₁ rest,
+      cases rest with rest' h₃,
+      rw ← h₃,
+      have rest' := zunzip_filter_first_irrel rest',
+      apply rest',
+      intros y h₄,
+      rw ← h₂ at h₄,
+      have h₅ := gip_g_in_grid h₄,
+      simp [flip, is_in_grid, bbox_of_grid] at h₅,
+      simp [gtr],
+      rw add_comm (-1 : ℤ),
+      rw ← sub_eq_add_neg,
+      rw int.le_sub_one_iff,
+      exact h₅.2.2
+    },
+    {
+      simp, apply le_min_elem_of_all, intros x,
+      generalize h₂ : gip_g a.g = indices,
+      rw h₂ at h, intros h₁,
+      simp at *, cases h₁ with y₁ rest,
+      cases rest with rest' h₃,
+      unfold gtr tr, simp [point.x, point.y],
+      rw ← h₃,
+      have rest' := zunzip_filter_first_irrel rest',
+      apply rest',
+      intros y h₄,
+      rw ← h₂ at h₄,
+      have h₅ := gip_g_in_grid h₄,
+      simp [flip, is_in_grid, bbox_of_grid] at h₅,
+      unfold gtr tr at h₅, simp [point.x] at h₅,
+      cases h₅ with h₅l h₅r,
+      cases h₅l with h₅ h₆,
+      rw add_comm,
+      apply le_add_of_neg_add_le,
+      rw add_comm,
+      exact h₅
+    }, 
+    {
+      simp,
+      rw add_comm, rw ← sub_le_sub_iff_right (1 : ℤ),
+      rw add_sub_assoc, have ψ : 1 - 1 = (0 : ℤ), from dec_trivial, rw ψ,
+      rw add_zero,
+      apply max_le_elem_of_all, intros x,
+      generalize h₂ : gip_g a.g = indices,
+      rw h₂ at h, intros h₁,
+      simp at *, cases h₁ with y₁ rest,
+      cases rest with rest' h₃,
+      rw ← h₃,
+      have rest' := zunzip_filter_first_irrel rest',
+      apply rest',
+      intros y h₄,
+      rw ← h₂ at h₄,
+      have h₅ := gip_g_in_grid h₄,
+      simp [flip, is_in_grid, bbox_of_grid] at h₅,
+      rw ← sub_eq_add_neg, rw int.le_sub_one_iff,
+      exact h₅.1.2
+    },
+    exact h
+  }
+end
+
+lemma compute_bounds_pres_grid :
+    uncurry (↗) (points_of_box $ compute_bounds a) :=
+begin
+  generalize h : compute_bounds a = bounds,
+  have grid_bounded := bounds.h,
+  unfold points_of_box, simp [uncurry],
+  exact grid_bounded
+end
+
+def canonical_grid :=
+  compute_bounds a = ⟨gbl a.g, gtr a.g, grid_is_bounding_box⟩
+
+def make_canonical :=
+  cautomaton.mk
+    ↑(subgrid a.g (compute_bounds a) (compute_bounds_pres_overlaid _))
+    a.empty a.neigh a.f a.ext
+
+def is_canonical := make_canonical a = a
+
+def aut_eq (a₁ a₂ : cautomaton α) : Prop :=
+  (band : bool → bool → bool) (℘(make_canonical a₁).g = ℘(make_canonical a₂).g)
+  $ (band : bool → bool → bool)
+    ((make_canonical a₁).g.r = (make_canonical a₂).g.r)
+    ((make_canonical a₁).g.c = (make_canonical a₂).g.c)
+
+infix ` ~ₐ `:100 := aut_eq
+
+instance decidable_aut_eq {α} [decidable_eq α] {a₁ a₂} :
+  decidable (@aut_eq α _ a₁ a₂) := by simp [(~ₐ)]; apply_instance
+
+def ext_aut (a : cautomaton α) : cautomaton α :=
+  let new_bb := a.ext (grid_bounds a.g) in
+  let new_grid :=
+    fgrid.mk
+      (rows_of_box new_bb)
+      (cols_of_box new_bb)
+      (mul_pos rows_of_box_pos cols_of_box_pos)
+      new_bb.p₁
+      (λx y, if h : (⟨y, x⟩ : point) ∈ a.g
+             then abs_data a.g $ grid_point_of_prod'
+                     ((make_bounded h.left), (make_bounded h.right))
+             else a.empty) in
+  ⟨new_grid, a.empty, a.neigh, a.f, a.ext⟩
+
+def default_if_nex {α : Type*} [grid α] (empty : relative_grid.carrier α)
+  (g : α) (p : point) : relative_grid.carrier α :=
+  if h : p ∈ g
+  then abs_data g (grid_point_of_prod' (in_grid_bounded g p h))
+  else empty
+
+def next_gen (a : cautomaton α) : cautomaton α :=
+  let new_grid := (ext_aut a).g in
+  let cells := ℘ new_grid in
+  let neighs := map a.neigh (gip_g new_grid) in
+  let defaulted := @default_if_nex (agrid₀ α) _ a.empty new_grid in
+  let neigh_cells := map (list.map defaulted) neighs in
+  let new_cells := zip_with a.f cells neigh_cells in
+  let grid :=
+    @agrid₀.mk _
+      ⟨grid_rows new_grid, grid_cols new_grid,
+       mul_pos rows_of_box_pos cols_of_box_pos,
+      ⟨new_cells, by simp [
+                       zip_with_len_l,
+                       length_generate_eq_size,
+                       size,
+                       rows_eq_bly_sub_try,
+                       cols_eq_trx_sub_blx,
+                       length_gip_g,
+                       length_gip,
+                       grid_is_bounding_box
+                     ]
+                  ⟩⟩ new_grid.o in
+    make_canonical ⟨grid, a.empty, a.neigh, a.f, a.ext⟩
+
+attribute [simp]
+lemma next_gen_empty : (next_gen a).empty = a.empty := rfl
+
+attribute [simp]
+lemma next_gen_neigh : (next_gen a).neigh = a.neigh := rfl
+
+attribute [simp]
+lemma next_gen_f : (next_gen a).f = a.f := rfl
+
+attribute [simp]
+lemma next_gen_ext : (next_gen a).ext = a.ext := rfl
+
+attribute [simp]
+lemma iterate_next_gen_empty {n} : (iterate next_gen a n).empty = a.empty :=
+begin
+  induction n with n ih, rw iterate_zero,
+  simp [*, iterate_one]
+end
+
+attribute [simp]
+lemma iterate_next_gen_neigh {n} : (iterate next_gen a n).neigh = a.neigh :=
+begin
+  induction n with n ih, rw iterate_zero,
+  simp [*, iterate_one]
+end
+
+attribute [simp]
+lemma iterate_next_gen_f {n} : (iterate next_gen a n).f = a.f :=
+begin
+  induction n with n ih, rw iterate_zero,
+  simp [*, iterate_one]
+end
+
+attribute [simp]
+lemma iterate_next_gen_ext {n} : (iterate next_gen a n).ext = a.ext :=
+begin
+  induction n with n ih, rw iterate_zero,
+  simp [*, iterate_one]
+end
+
+def step_n (n : ℕ) := iterate next_gen a n
+
+def periodic := {n // n ≠ 0 ∧ step_n a n = a}
+
+def count_at_single {α : Type} [decidable_eq α] (neigh : list α) (valid : α) :=
+  list.sum ∘ map (λc, if c = valid then 1 else 0) $ neigh
+
+def yield_at_if_in_neigh {α : Type} [decidable_eq α]
+  (a : cautomaton α) (p : point) :=
+  if p ∈ a.neigh p
+  then some $ @default_if_nex (agrid₀ α) _ a.empty a.g p
+  else none
+
+def yield_at (p : point) : α := @default_if_nex (agrid₀ α) _ a.empty a.g p
+
+def mod_at (p : point) (x : α) (a : cautomaton α) : cautomaton α :=
+  ⟨modify_at p x a.g, a.empty, a.neigh, a.f, a.ext⟩
+
+def mod_many (l : list (point × α)) (a : cautomaton α) : cautomaton α :=
+  ⟨modify_many l a.g, a.empty, a.neigh, a.f, a.ext⟩
+
+end cautomaton_ops
+
+section counting
+
+variables {α : Type} [decidable_eq α] (a : cautomaton α)
+
+def count (c : α) : ℕ := count_grid a.g c
+
+lemma count_grid_eq_count {x} : count a x = count_grid a.g x := rfl
+
+lemma count_cast_foa (a : agrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
+begin
+  simp [count_grid],
+  unfold_coes, 
+  rw gen_aof_eq_gen,
+  rw gen_foa_eq_gen
+end
+
+lemma count_cast_aof (a : fgrid α) {x} : count_grid ↑a x = count_grid a x :=
+begin
+  simp [count_grid],
+  unfold_coes, 
+  rw gen_foa_eq_gen,
+  rw gen_aof_eq_gen
+end
+
+lemma yield_at_nonempty {p} {a : cautomaton α}
+  (h : yield_at a p ≠ a.empty) : p ∈ a.g :=
+begin
+  by_cases h₁ : p ∈ a.g,
+    {
+      exact h₁
+    },
+    {
+      exfalso,
+      unfold yield_at default_if_nex at h,
+      rw dif_neg at h,
+        {
+          contradiction
+        },
+        {
+          exact h₁
+        }
+    }
+end
+
+end counting
+
+namespace cardinals
+
+section cardinals
+
+variables {α : Type} [decidable_eq α] (a : cautomaton α) (p : point)
+          (neigh : point → list point)
+
+def neigh_with_NW := ∀p : point, point.mk (p.x - 1) (p.y - 1) ∈ neigh p
+
+def neigh_with_N  := ∀p : point, point.mk p.x       (p.y - 1) ∈ neigh p
+
+def neigh_with_NE := ∀p : point, point.mk (p.x + 1) (p.y - 1) ∈ neigh p
+
+def neigh_with_W  := ∀p : point, point.mk (p.x - 1) p.y       ∈ neigh p
+
+def neigh_with_E  := ∀p : point, point.mk (p.x + 1) p.y       ∈ neigh p
+
+def neigh_with_SW := ∀p : point, point.mk (p.x - 1) (p.y + 1) ∈ neigh p
+
+def neigh_with_S  := ∀p : point, point.mk p.x       (p.y + 1) ∈ neigh p
+
+def neigh_with_SE := ∀p : point, point.mk (p.x + 1) (p.y + 1) ∈ neigh p
+
+open cautomatons
+
+lemma neumann_N : neigh_with_N neumann :=
+  λ⟨x, y⟩, by simp [neumann]
+
+lemma neumann_W : neigh_with_W neumann :=
+  λ⟨x, y⟩, by simp [neumann]
+
+lemma neumann_E : neigh_with_E neumann :=
+  λ⟨x, y⟩, by simp [neumann]
+
+lemma neumann_S : neigh_with_S neumann :=
+  λ⟨x, y⟩, by simp [neumann]
+
+lemma moore_NW : neigh_with_NW moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_N : neigh_with_N moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_NE : neigh_with_NE moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_W : neigh_with_W moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_E : neigh_with_E moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_SW : neigh_with_SW moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_S : neigh_with_S moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+lemma moore_SE : neigh_with_SE moore :=
+  λ⟨x, y⟩, by simp [moore]
+
+def NW (h : neigh_with_NW a.neigh) := yield_at a ⟨p.x - 1, p.y - 1⟩
+
+def N (h : neigh_with_N a.neigh) := yield_at a ⟨p.x, p.y - 1⟩
+
+def NE (h : neigh_with_NE a.neigh) := yield_at a ⟨p.x + 1, p.y - 1⟩
+
+def W (h : neigh_with_W a.neigh) := yield_at a ⟨p.x - 1, p.y⟩
+
+def E (h : neigh_with_E a.neigh) := yield_at a ⟨p.x + 1, p.y⟩
+
+def SW (h : neigh_with_SW a.neigh) := yield_at a ⟨p.x - 1, p.y + 1⟩
+
+def S (h : neigh_with_S a.neigh) := yield_at a ⟨p.x, p.y + 1⟩
+
+def SE (h : neigh_with_SE a.neigh) := yield_at a ⟨p.x + 1, p.y + 1⟩
+
+end cardinals
+
+end cardinals
