@@ -963,11 +963,7 @@ end
 
 lemma map_generate_map_f {α β : Type} (g : fgrid α) {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
-begin
-  rcases g with ⟨r, c, h, o, d⟩,
-  simp [(<$>), generate, abs_data, data, uncurry_def, (∘)],
-  refl
-end
+  by simpa [(<$>), generate, abs_data, data, uncurry_def, (∘)]
 
 lemma dec_grid_len_eq_indices_len :
   length (℘ g) = length (gip_g g) :=
@@ -1314,7 +1310,8 @@ begin
       rw [mul_comm, mod_add_div], rw ← sub_eq_add_neg,
       rw [add_sub_cancel'_right, ← int.coe_nat_div],
       apply coe_zero_le,
-      rw ← int.coe_nat_mod, apply coe_zero_le,
+      rw ← int.coe_nat_mod,
+      exact coe_zero_le _,
     },
   repeat { rw ← nth_le_nth }, simp at this, simp only [this], rwa hd,
   simpa [length_generate_eq_size, size, rows, cols]
@@ -1538,42 +1535,36 @@ def subgrid (bb : bounding_box) (h : overlaid_by bb (bbox_of_grid g)) :
    λx y, abs_data g ⟨⟨x.1,
     begin
       unfold overlaid_by at h, cases x with x hx, simp,
-      rw bbox_of_grid_p₁ at h, rw bbox_of_grid_p₂ at h, 
-      split,
-      have : (bb.p₁).y - ↑(rows_of_box bb) = bb.p₂.y,
-        {
-          cases bb,
-          simp [-sub_eq_add_neg, bounding_box.p₁, bounding_box.p₂, rows_of_box],
-          rw nat_abs_of_nonneg (nonneg_of_lt (grid_bounded_iff.1 bb_h).2),
-          rw sub_sub_cancel
-        },
-      rw this at hx,
-      exact le_trans h.2.1 hx.1,
-      exact lt_of_lt_of_le hx.2 h.2.2
+      rw bbox_of_grid_p₁ at h, rw bbox_of_grid_p₂ at h,
+      exact ⟨
+        begin
+          have : (bb.p₁).y - ↑(rows_of_box bb) = bb.p₂.y,
+            by simp [
+                 -sub_eq_add_neg, bounding_box.p₁, bounding_box.p₂, rows_of_box,
+                 nat_abs_of_nonneg (nonneg_of_lt (grid_bounded_iff.1 bb.3).2),
+                 sub_sub_cancel
+               ], rw this at hx,
+          exact le_trans h.2.1 hx.1
+        end,
+        lt_of_lt_of_le hx.2 h.2.2
+      ⟩
     end⟩, ⟨y.1,
     begin
       unfold overlaid_by at h, cases y with y hy, simp,
       rw bbox_of_grid_p₁ at h, rw bbox_of_grid_p₂ at h, 
       have : (bb.p₁).x + ↑(cols_of_box bb) = bb.p₂.x,
-        {
-          cases bb,
-          simp [-sub_eq_add_neg, bounding_box.p₁, bounding_box.p₂, cols_of_box],
-          rw nat_abs_of_nonneg (nonneg_of_lt (grid_bounded_iff.1 bb_h).1),
-          rw add_sub_cancel'_right
-        },
-      rw this at hy,
-      split,
-      exact le_trans h.1.1 hy.1,
-      exact lt_of_lt_of_le hy.2 h.1.2
+        by simp [
+             -sub_eq_add_neg, bounding_box.p₁, bounding_box.p₂, cols_of_box,
+             nat_abs_of_nonneg (nonneg_of_lt (grid_bounded_iff.1 bb.3).1),
+             add_sub_cancel'_right
+           ], rw this at hy,
+      exact ⟨le_trans h.1.1 hy.1, lt_of_lt_of_le hy.2 h.1.2⟩
     end⟩⟩⟩
 
 private def modify_vec
   {α : Type} {m} (v : vector α m) (n : ℕ) (x : α) : vector α m :=
   ⟨update_nth v.to_list n x,
-    begin
-      rw update_nth_pres_len,
-      simp*
-    end⟩
+   by simp [update_nth_pres_len, *]⟩
 
 def modify_at {α : Type} (p : point) (x : α) (g : agrid₀ α) : agrid₀ α :=
   if h : p ∈ g
@@ -1586,18 +1577,14 @@ def modify_at {α : Type} (p : point) (x : α) (g : agrid₀ α) : agrid₀ α :
   else g
 
 def modify_many {α : Type} (l : list (point × α)) (g : agrid₀ α) : agrid₀ α :=
-  foldr (function.uncurry modify_at) g l
+  foldr (uncurry modify_at) g l
 
 def count_grid {α : Type} [grid α] [decidable_eq (relative_grid.carrier α)]
   (g : α) (x : relative_grid.carrier α) := list.count x (℘ g)
 
 lemma gen_aof_eq_gen {α : Type} {g : fgrid α} :
   ℘ (agrid_of_fgrid g) = @generate _ ag_f g :=
-begin
-  simp [agrid_of_fgrid],
-  rw generate_eq_data,
-  simp
-end
+  by simp [agrid_of_fgrid, generate_eq_data]
 
 private theorem generate_inj_a_f {α : Type} {g₁ : agrid₀ α} {g₂ : fgrid α}
   (hrows : g₁.r = g₂.r)
@@ -1614,7 +1601,7 @@ begin
   dsimp at hrows hcols horig hl₁ hl₂,
   subst hrows, subst hcols, subst horig,
   unfold_coes, simp [agrid_of_fgrid], unfold_projs,
-  simp [h.symm], simp [generate_eq_data], cases g₁d, simp
+  simp [h.symm, generate_eq_data], cases g₁d, simp
 end
 
 lemma gen_foa_eq_gen {α : Type} {g : agrid₀ α} :
@@ -1624,15 +1611,13 @@ begin
     from length_generate _,
   have hl₂ : length (℘ (fgrid_of_agrid g)) = rows g * cols g,
     from length_generate _,
-  unfold fgrid_of_agrid at hl₂,
-  simp [fgrid_of_agrid],
+  simp [fgrid_of_agrid, fgrid_of_agrid] at *,
   apply list.ext_le (hl₂.trans hl₁.symm) (λi hi₁ hi₂, _),
-  rw nth_generate, rw nth_generate,
-  cases g with g o, cases g with r c h d,
-  simp [gtr, tr, bl, rows, cols],
-  simp [abs_data, data], simp [relpoint_of_gpoint, prod_of_rel_point, tl, bl,
-  rows, cols, function.uncurry],
-  refl
+  repeat { rw nth_generate },
+  simpa [
+    expand_gtr, bl, rows, cols, abs_data, data, relpoint_of_gpoint,
+    prod_of_rel_point, tl, bl, rows, cols, uncurry
+  ]
 end
 
 private theorem generate_inj_f_a {α : Type} {g₁ : fgrid α} {g₂ : agrid₀ α}
@@ -1660,25 +1645,12 @@ begin
   let i := |x - tly| * g₁c + |y - tlx|,
   have hi : i = |x - tly| * g₁c + |y - tlx|, refl,
   have r_nonneg : x - tly ≥ 0,
-        {
-          simp only [(≥)],
-          rw le_sub_iff_add_le,
-          rw zero_add,
-          exact xbounds.1
-        },
+    by simp only [ge_from_le, le_sub_iff_add_le, zero_add, xbounds.1],
   have c_nonneg : y - tlx ≥ 0,
-    {
-      simp only [(≥)],
-      rw le_sub_iff_add_le,
-      rw zero_add,
-      exact ybounds.1
-    },
+    by simp only [ge_from_le, le_sub_iff_add_le, zero_add, ybounds.1],
   have i_nonneg : 0 ≤ i,
     {
-      rw hi,
-      rw ← int.coe_nat_le_coe_nat_iff,
-      rw int.coe_nat_add,
-      rw int.coe_nat_mul,
+      rw [hi, ← int.coe_nat_le_coe_nat_iff, int.coe_nat_add, int.coe_nat_mul],
       repeat { rw nat_abs_of_nonneg; try { assumption } },
       apply le_add_of_le_of_nonneg _ c_nonneg,
       suffices h : (x - (g₁o.y - ↑g₁r)) * ↑g₁c ≥ 0, from h,
@@ -1693,8 +1665,9 @@ begin
         try { rw ← int.coe_nat_lt_coe_nat_iff };
         rw nat_abs_of_nonneg; try { assumption },
       rw sub_lt_iff_lt_add', exact ybounds.2,
-      rw ← sub_add, rw add_comm, apply add_lt_of_le_of_neg (le_refl _),
-      rw sub_lt_iff_lt_add, rw zero_add, exact xbounds.2
+      rw [← sub_add, add_comm],
+      apply add_lt_of_le_of_neg (le_refl _),
+      rw [sub_lt_iff_lt_add, zero_add], exact xbounds.2
     },
   have h₁ : ∀hh,
     list.nth_le (℘ (
@@ -1702,66 +1675,52 @@ begin
     )) i hh =
     list.nth_le (℘ (
       {to_grid₀ := {r := g₁r, c := g₁c, h := g₂h, data := ⟨d₂, hd₂⟩},
-        o := g₁o} : agrid₀ α)) i _,
-      {
-        intros, simp [h], unfold_coes,
-        simp [gen_foa_eq_gen]
-      },
-  specialize h₁ _, swap 2,
-  rw length_generate_eq_size, exact i_bounded,
-  swap 2,
-  rw length_generate_eq_size, exact i_bounded,
-  unfold_coes at h₁,
-  simp [gen_foa_eq_gen] at h₁,
+        o := g₁o} : agrid₀ α)) i (by rw length_generate_eq_size; exact i_bounded),
+      {intros, simp [h], unfold_coes, simp [gen_foa_eq_gen]},
+  specialize h₁ (by rw length_generate_eq_size; exact i_bounded),
+  unfold_coes at h₁, simp [gen_foa_eq_gen] at h₁,
   simp [
     -sub_eq_add_neg, generate, abs_data, inject_into_bounded,
     grid_point_of_prod, prod_of_rel_point, make_bounded_idx,
-    make_bounded, relpoint_of_gpoint, function.uncurry,
+    make_bounded, relpoint_of_gpoint, uncurry,
     relative_grid.data, vector.nth, tl, bl, rows, nth_le_gip_g,
-    bl, gtr, tr, rows, cols
+    bl, expand_gtr, rows, cols
   ] at h₁,
-  simp [abs_data, relpoint_of_gpoint, prod_of_rel_point, tl, bl, rows, data,
-    function.uncurry, vector.nth],
+  simp [
+    abs_data, relpoint_of_gpoint, prod_of_rel_point, tl, bl, rows, data,
+    uncurry, vector.nth
+  ],
   unfold_coes at h₁, simp only [z_of_bounded] at h₁,
+  have colsnezero : ↑g₁c ≠ (0 : ℤ), assume contra,
+        by simp at contra; simp [contra] at g₁h; exact absurd g₁h (gt_irrefl _),
   have : g₁o.y - of_nat g₁r + of_nat (
-             |g₁o.y - of_nat g₁r +
-             (of_nat ( |y - tlx| ) + of_nat ( |x - tly| ) * of_nat g₁c) /
-             of_nat g₁c - (g₁o.y - of_nat g₁r)| ) = x,
-        {
-          repeat { rw of_nat_eq_coe },
-          repeat { rw add_sub },
-          rw add_sub_cancel',
-          repeat { rw nat_abs_of_nonneg; try { assumption } },
-          change g₁o.y - ↑g₁r with tly,
-          rw int.add_mul_div_right,
-          rw ← add_assoc, rw add_sub,
-          rw div_eq_zero_of_lt c_nonneg (sub_lt_iff_lt_add'.2 ybounds.2),
-          simp,
-          simp, intros contra, rw contra at g₁h,
-          have falso : ¬0 > 0, from gt_irrefl _,
-          contradiction,
-          rw int.add_mul_div_right,
-          apply add_nonneg, apply int.div_nonneg c_nonneg,
-          simp [(≥)], exact r_nonneg,
-          simp, intros contra, rw contra at g₁h,
-          have falso : ¬0 > 0, from gt_irrefl _,
-          contradiction,
-        },
+           |g₁o.y - of_nat g₁r +
+           (of_nat ( |y - tlx| ) + of_nat ( |x - tly| ) * of_nat g₁c) /
+           of_nat g₁c - (g₁o.y - of_nat g₁r)|
+         ) = x,
+    {
+      repeat { rw of_nat_eq_coe }, repeat { rw add_sub }, rw add_sub_cancel',
+      repeat { rw nat_abs_of_nonneg; try { assumption } },
+      change g₁o.y - ↑g₁r with tly,
+      rw [
+        int.add_mul_div_right,
+        ← add_assoc,
+        add_sub,
+       div_eq_zero_of_lt c_nonneg (sub_lt_iff_lt_add'.2 ybounds.2)
+      ], simp [colsnezero], exact colsnezero,
+      rw int.add_mul_div_right _ _ colsnezero,
+      apply add_nonneg, apply int.div_nonneg c_nonneg, simp [ge_from_le],
+      exact r_nonneg
+    },
   simp only [this] at h₁,
   have : g₁o.x + of_nat ( |g₁o.x + of_nat ( |y - tlx| ) % of_nat g₁c - g₁o.x| )
           = y,
     {
       repeat { rw of_nat_eq_coe },
-      repeat { rw add_sub },
       rw add_sub_cancel',
       repeat { rw nat_abs_of_nonneg; try { assumption } },
-      rw mod_eq_of_lt c_nonneg,
-      simp [tlx],
-      apply sub_lt_iff_lt_add'.2 ybounds.2,
-      apply mod_nonneg,
-      simp, intros contra, rw contra at g₁h,
-      have falso : ¬0 > 0, from gt_irrefl _,
-      contradiction,
+      rw mod_eq_of_lt c_nonneg (sub_lt_iff_lt_add'.2 ybounds.2), simp [tlx],
+      exact mod_nonneg _ colsnezero
     },
   simp only [this] at h₁,
   have : |g₁o.x + of_nat ( |y - tlx| ) % of_nat g₁c - g₁o.x| +
@@ -1769,64 +1728,34 @@ begin
          of_nat g₁c) / of_nat g₁c - (g₁o.y - of_nat g₁r)| * g₁c =
   |y + -g₁o.x| + |x + (↑g₁r + -g₁o.y)| * g₁c,
     {
-      repeat { rw of_nat_eq_coe },
-      rw add_sub_cancel',
-      rw add_sub_cancel',
+      repeat { rw of_nat_eq_coe }, repeat { rw add_sub_cancel' },
       simp only [tlx],
-      repeat { rw ← sub_eq_add_neg },
-      rw mul_comm,
-      repeat { rw nat_abs_of_nonneg },
-      rw ← int.coe_nat_eq_coe_nat_iff,
-      repeat { rw int.coe_nat_add },
-      repeat { rw nat_abs_of_nonneg },
+      repeat { rw ← sub_eq_add_neg }, rw mul_comm,
+      have h₂ : y - g₁o.x ≥ 0,
+         by simp only [ge_from_le]; rw [le_sub_iff_add_le, zero_add];
+            exact ybounds.1,
+      have h₃ : (y - g₁o.x) % ↑g₁c ≥ 0, from mod_nonneg _ colsnezero,
+      have h₄ : (y - g₁o.x + (x - tly) * ↑g₁c) / ↑g₁c ≥ 0,
+        {
+          simp only [tly, int.add_mul_div_right _ _ colsnezero],
+          have h₃ : 0 ≤ x - (g₁o.y - ↑g₁r),
+            by rw [le_sub_iff_add_le, zero_add]; exact xbounds.1,
+          have h₄ : ↑g₁c ≥ (0 : ℤ), by simp [(≥)],
+          exact add_nonneg (int.div_nonneg h₂ h₄) h₃
+        },
+      repeat { rw nat_abs_of_nonneg; try { assumption } },
+      rw ← int.coe_nat_eq_coe_nat_iff, repeat { rw int.coe_nat_add },
+      repeat { rw nat_abs_of_nonneg; try { assumption } },
       rw int.coe_nat_mul,
-      repeat { rw nat_abs_of_nonneg },
-      rw int.add_mul_div_right,
+      repeat { rw nat_abs_of_nonneg; try { assumption } },
+      rw int.add_mul_div_right _ _ colsnezero,
       simp only [mul_add],
-      rw ← add_assoc,
-      rw mod_add_div (y - g₁o.x) ↑g₁c,
-      rw int.coe_nat_mul,
-      repeat { rw nat_abs_of_nonneg },
-      simp [tly],
-      rw mul_comm,
-      rw add_sub, simp only [(≥)],
-      rw le_sub_iff_add_le, simp,
-      rw sub_le_iff_le_add at xbounds,
-      exact xbounds.1,
-      intros contra, simp at contra, rw contra at g₂h,
-      simp at g₂h, have : ¬0 > 0, from gt_irrefl _, contradiction,
-      simp only [tly],
-      rw int.add_mul_div_right,
-      apply add_nonneg,
-      apply int.div_nonneg,
-      simp [(≥)],
-      apply le_add_of_sub_right_le,
-      simp, exact ybounds.1,
-      simp [(≥)],
-      rw le_sub_iff_add_le,
-      rw zero_add,
-      exact xbounds.1,
-      intros contra, simp at contra, rw contra at g₂h,
-      simp at g₂h, have : ¬0 > 0, from gt_irrefl _, contradiction,
-      simp only [(≥)],
-      rw le_sub_iff_add_le,
-      rw zero_add,
-      exact ybounds.1,
-      simp only [(≥)],
-      apply mod_nonneg,
-      intros contra, simp at contra, rw contra at g₂h,
-      simp at g₂h, have : ¬0 > 0, from gt_irrefl _, contradiction,
-      simp [tly, (≥)],
-      rw ← add_assoc,
-      rw ← sub_eq_add_neg,
-      rw sub_add,
-      rw le_sub_iff_add_le,
-      rw zero_add,
-      exact xbounds.1,
-      simp only [(≥)],
-      rw le_sub_iff_add_le,
-      rw zero_add,
-      exact ybounds.1,
+      rw [← add_assoc, mod_add_div (y - g₁o.x) ↑g₁c, int.coe_nat_mul],
+      have : x + (↑g₁r - g₁o.y) ≥ 0,
+        by simp only [ge_from_le]; rw [add_sub, le_sub_iff_add_le]; simp;
+           exact sub_le_iff_le_add.1 xbounds.1,
+      repeat { rw nat_abs_of_nonneg; try { assumption } },
+      simp [tly, mul_comm]
     },
   simp only [this] at h₁,
   exact h₁
@@ -1850,40 +1779,30 @@ theorem grid_eq_iff_f_a
 
 lemma nth_agrid_of_fgrid {α : Type} {g : fgrid α} {n} :
   list.nth (agrid_of_fgrid g).to_grid₀.data.val n = list.nth (℘ g) n :=
-begin
-  delta agrid_of_fgrid, simp
-end  
+  by delta agrid_of_fgrid; simp
 
 instance decidable_eq_a_a {α : Type} [decidable_eq α]
   : decidable_eq (agrid₀ α) :=
   λg₁ g₂, if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-            begin
-              simp [grid_eq_iff_a_a, *], apply_instance
-            end
+            by simp [grid_eq_iff_a_a, *]; apply_instance
           else is_false $ by finish
 
 instance decidable_eq_f_f {α : Type} [decidable_eq α]
   : decidable_eq (fgrid α) :=
   λg₁ g₂, if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-            begin
-              simp [grid_eq_iff_f_f, *], apply_instance
-            end
+            by simp [grid_eq_iff_f_f, *]; apply_instance
           else is_false $ by finish
 
 instance decidable_eq_a_f {α : Type} [decidable_eq α]
   {g₁ : agrid₀ α} {g₂ : fgrid α} : decidable (g₁ = g₂) :=
   if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-    begin
-      simp [grid_eq_iff_a_f, *], apply_instance
-    end
+    by simp [grid_eq_iff_a_f, *]; apply_instance    
   else is_false $ by finish
 
 instance decidable_eq_f_a {α : Type} [decidable_eq α]
   {g₁ : fgrid α} {g₂ : agrid₀ α} : decidable (g₁ = g₂) :=
   if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-    begin
-      simp [grid_eq_iff_f_a, *], apply_instance
-    end
+    by simp [grid_eq_iff_f_a, *]; apply_instance
   else is_false $ by finish
 
 lemma subgrid_self {α : Type} {g : agrid₀ α} {bb : bounding_box}
@@ -1891,19 +1810,28 @@ lemma subgrid_self {α : Type} {g : agrid₀ α} {bb : bounding_box}
   : subgrid g bb begin unfold bbox_of_grid, rw h, exact overlaid_by_refl _ end =
     g :=
 begin
-  cases g with g o, cases g with r c h d, 
-  simp [h, subgrid], unfold_coes, rw grid_eq_iff_f_f, rw gen_foa_eq_gen,
-  apply ext_le, rw length_generate_eq_size, rw length_generate_eq_size,
-  simp [size, rows, cols, rows_of_box, cols_of_box, bl, gtr, tr],
-  intros,
-  rw nth_generate,
-  rw nth_generate,
-  simp only [abs_data, data, gtr, tr, bl, (∘),
-  relpoint_of_gpoint, prod_of_rel_point, function.uncurry, rows, cols, tl,
-  rows_of_box, cols_of_box], simp, unfold_coes,
-  simp [z_of_bounded], simp [rows_of_box, bl, gtr, tr, rows],
-  simp [cols_of_box, bl, gtr, tr, cols],  
-  simp [cols_of_box, bl, gtr, tr, cols]
+  cases g with g o, cases g with r c h d,
+  simp [h, subgrid], unfold_coes,
+  rw grid_eq_iff_f_f;
+    try { simp [cols_of_box, bl, expand_gtr, cols] };
+    try { simp [z_of_bounded] };
+    try { simp [rows_of_box, bl, expand_gtr, rows] },
+  rw gen_foa_eq_gen,
+  apply ext_le,
+    {
+      simp [
+        length_generate_eq_size, size, rows, cols,
+        rows_of_box, cols_of_box, bl, expand_gtr
+      ]
+    },
+    {
+      intros,
+      simp only [
+        nth_generate, abs_data, data, expand_gtr, bl, (∘),
+        relpoint_of_gpoint, prod_of_rel_point, uncurry, rows, cols, tl,
+        rows_of_box, cols_of_box
+      ], simp, unfold_coes, refl
+    }
 end
 
 end finite_grid

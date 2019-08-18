@@ -51,7 +51,7 @@ def transpose (m₁ : matrix m n α) : matrix n m α :=
             end, ⟨m₁.g.o.y - m, m₁.g.o.x + n⟩,
       λx y, abs_data m₁.g ⟨⟨y.1,
         begin
-          cases y with y h, simp at h, simp [gtr, tr, grid.bl],
+          cases y with y h, simp at h, simp [expand_gtr, grid.bl],
           have : ↑(relative_grid.rows (m₁.g)) = ↑m,
             {
               cases m₁ with g h₁ h₂, cases g, simp at h₁ h₂,
@@ -60,7 +60,7 @@ def transpose (m₁ : matrix m n α) : matrix n m α :=
           rw this, exact h
         end⟩, ⟨x.1,
         begin
-          cases x with x h, simp at h, simp [gtr, tr, grid.bl],
+          cases x with x h, simp at h, simp [expand_gtr, grid.bl],
           have : ↑(relative_grid.cols (m₁.g)) = ↑n,
             {
               cases m₁ with g h₁ h₂, cases g, simp at h₁ h₂,

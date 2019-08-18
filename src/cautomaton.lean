@@ -102,30 +102,13 @@ theorem caut_eq_iff {a₁ a₂ : cautomaton α}
   (hneigh : a₁.neigh = a₂.neigh)
   (hf : a₁.f = a₂.f)
   (hext : a₁.ext = a₂.ext) : a₁ = a₂ ↔ a₁.g = a₂.g :=
-begin
-  split; intros h,
-    {
-      rw h
-    },
-    {
-      cases a₁, cases a₂,
-      congr; cc
-    }
-end
+  ⟨λh, by simp [h], λh, by cases a₁; cases a₂; congr; cc⟩
 
 private lemma pres_unempty {α β : Type} {f} {filtered : list (α × β)}
   {l : list ℤ}
   (h : ¬empty_list filtered) (h₁ : l = map f ((fst ∘ unzip) filtered)) : 
   ¬empty_list l :=
-begin
-  subst h₁,
-  rw map_empty_iff_l_empty,
-  have head_tail : ∃x xs, filtered = x :: xs,
-    from empty_list_eq_ex h,
-  cases head_tail, cases head_tail_h,
-  rw head_tail_h_h, rw unzip_fst_empty_iff_l_empty,
-  intros contra, cases contra
-end
+  by simp [h₁, map_empty_iff_l_empty, unzip_fst_empty_iff_l_empty, h]
 
 def compute_bounds : bounding_box :=
   let bounded  := gip_g a.g in
@@ -147,8 +130,7 @@ def compute_bounds : bounding_box :=
     split;
       {
         rw add_comm,
-        apply int.lt_add_one_of_le,
-        apply min_elem_le_max_elem
+        exact int.lt_add_one_of_le (min_elem_le_max_elem _ _)
       }
   end⟩
 
@@ -157,97 +139,57 @@ lemma compute_bounds_pres_overlaid
   :=
 begin
   simp [overlaid_by, compute_bounds],
-  by_cases h :
-    empty_list
-      (filter (λ (x : point × α), x.snd ≠ a.empty)
-              (zip (gip_g (a.g)) (℘ (a.g)))),
+  generalize h₂ : gip_g a.g = indices,
+  by_cases h : empty_list (filter (λ (x : point × α), x.snd ≠ a.empty)
+                                  (zip indices ℘ (a.g))); simp [h₂, h],
+  {exact ⟨⟨le_refl _, le_refl _⟩, ⟨le_refl _, le_refl _⟩⟩},
   {
-    rw dif_pos, simp, split; split; refl, exact h
-  },
-  {
-    rw dif_neg, split; split,
+    split; split,
     {
-      apply le_min_elem_of_all, intros x,
-      generalize h₂ : gip_g a.g = indices,
-      rw h₂ at h, intros h₁,
-      simp at *,
-      cases h₁ with y₁ rest,
-      cases rest with rest' h₃,
-      rw ← h₃,
-      have rest' := zunzip_filter_first_irrel rest',
-      apply rest',
-      intros y h₄,
-      rw ← h₂ at h₄,
+      apply le_min_elem_of_all _ _ _ (λx, λh₁, _),
+      simp at h₁, rcases h₁ with ⟨y₁, rest, h₃⟩, subst h₃,
+      apply (zunzip_filter_first_irrel rest),
+      rw ← h₂, intros y h₄,
       have h₅ := gip_g_in_grid h₄,
       simp [flip, is_in_grid, bbox_of_grid] at h₅,
       exact h₅.2.1
     },    
     { 
-      simp [tr],
-      rw add_comm, rw ← sub_le_sub_iff_right (1 : ℤ),
-      rw add_sub_assoc, have ψ : 1 - 1 = (0 : ℤ), from dec_trivial, rw ψ,
-      rw add_zero,
-      apply max_le_elem_of_all, intros x,
-      generalize h₂ : gip_g a.g = indices,
-      rw h₂ at h, intros h₁,
-      simp at *, cases h₁ with y₁ rest,
-      cases rest with rest' h₃,
-      rw ← h₃,
-      have rest' := zunzip_filter_first_irrel rest',
-      apply rest',
-      intros y h₄,
-      rw ← h₂ at h₄,
+      rw [add_comm, ← sub_le_sub_iff_right (1 : ℤ), add_sub_assoc],
+      have : 1 - 1 = (0 : ℤ), from dec_trivial, rw this, rw add_zero,
+      apply max_le_elem_of_all _ _ _ (λx, λh₁, _),
+      simp at h₁, rcases h₁ with ⟨y₁, rest, h₃⟩, subst h₃,
+      apply (zunzip_filter_first_irrel rest), rw ← h₂, intros y h₄,
       have h₅ := gip_g_in_grid h₄,
       simp [flip, is_in_grid, bbox_of_grid] at h₅,
       simp [gtr],
-      rw add_comm (-1 : ℤ),
-      rw ← sub_eq_add_neg,
-      rw int.le_sub_one_iff,
+      rw [add_comm (-1 : ℤ), ← sub_eq_add_neg, int.le_sub_one_iff],
       exact h₅.2.2
     },
     {
-      simp, apply le_min_elem_of_all, intros x,
-      generalize h₂ : gip_g a.g = indices,
-      rw h₂ at h, intros h₁,
-      simp at *, cases h₁ with y₁ rest,
-      cases rest with rest' h₃,
-      unfold gtr tr, simp [point.x, point.y],
-      rw ← h₃,
-      have rest' := zunzip_filter_first_irrel rest',
-      apply rest',
-      intros y h₄,
-      rw ← h₂ at h₄,
+      apply le_min_elem_of_all _ _ _ (λx, λh₁, _),
+      simp at h₁, rcases h₁ with ⟨y₁, rest, h₃⟩, subst h₃,
+      simp [expand_gtr, point.x, point.y],
+      apply (zunzip_filter_first_irrel rest),
+      rw ← h₂, intros y h₄,
       have h₅ := gip_g_in_grid h₄,
-      simp [flip, is_in_grid, bbox_of_grid] at h₅,
-      unfold gtr tr at h₅, simp [point.x] at h₅,
-      cases h₅ with h₅l h₅r,
-      cases h₅l with h₅ h₆,
-      rw add_comm,
-      apply le_add_of_neg_add_le,
-      rw add_comm,
+      simp [flip, is_in_grid, bbox_of_grid, expand_gtr, point.x] at h₅,
+      rcases h₅ with ⟨⟨h₅, h₆⟩, ⟨h₇, h₈⟩⟩,
+      rw add_comm, apply le_add_of_neg_add_le, rw add_comm,
       exact h₅
     }, 
     {
-      simp,
-      rw add_comm, rw ← sub_le_sub_iff_right (1 : ℤ),
-      rw add_sub_assoc, have ψ : 1 - 1 = (0 : ℤ), from dec_trivial, rw ψ,
-      rw add_zero,
-      apply max_le_elem_of_all, intros x,
-      generalize h₂ : gip_g a.g = indices,
-      rw h₂ at h, intros h₁,
-      simp at *, cases h₁ with y₁ rest,
-      cases rest with rest' h₃,
-      rw ← h₃,
-      have rest' := zunzip_filter_first_irrel rest',
-      apply rest',
-      intros y h₄,
-      rw ← h₂ at h₄,
+      rw [add_comm, ← sub_le_sub_iff_right (1 : ℤ), add_sub_assoc],
+      have : 1 - 1 = (0 : ℤ), from dec_trivial, rw [this, add_zero],
+      apply max_le_elem_of_all _ _ _ (λx, λh₁, _),
+      simp at h₁, rcases h₁ with ⟨y₁, rest, h₃⟩, subst h₃,
+      apply (zunzip_filter_first_irrel rest),
+      rw ← h₂, intros y h₄,
       have h₅ := gip_g_in_grid h₄,
       simp [flip, is_in_grid, bbox_of_grid] at h₅,
-      rw ← sub_eq_add_neg, rw int.le_sub_one_iff,
+      rw int.le_sub_one_iff,
       exact h₅.1.2
-    },
-    exact h
+    }
   }
 end
 
@@ -255,9 +197,7 @@ lemma compute_bounds_pres_grid :
     uncurry (↗) (points_of_box $ compute_bounds a) :=
 begin
   generalize h : compute_bounds a = bounds,
-  have grid_bounded := bounds.h,
-  unfold points_of_box, simp [uncurry],
-  exact grid_bounded
+  simp [points_of_box, uncurry, bounds.h]
 end
 
 def canonical_grid :=
@@ -339,31 +279,19 @@ lemma next_gen_ext : (next_gen a).ext = a.ext := rfl
 
 attribute [simp]
 lemma iterate_next_gen_empty {n} : (iterate next_gen a n).empty = a.empty :=
-begin
-  induction n with n ih, rw iterate_zero,
-  simp [*, iterate_one]
-end
+  by induction n with n ih; simp [iterate_zero, *, iterate_one]
 
 attribute [simp]
 lemma iterate_next_gen_neigh {n} : (iterate next_gen a n).neigh = a.neigh :=
-begin
-  induction n with n ih, rw iterate_zero,
-  simp [*, iterate_one]
-end
+  by induction n with n ih; simp [iterate_zero, *, iterate_one]
 
 attribute [simp]
 lemma iterate_next_gen_f {n} : (iterate next_gen a n).f = a.f :=
-begin
-  induction n with n ih, rw iterate_zero,
-  simp [*, iterate_one]
-end
+  by induction n with n ih; simp [iterate_zero, *, iterate_one]
 
 attribute [simp]
 lemma iterate_next_gen_ext {n} : (iterate next_gen a n).ext = a.ext :=
-begin
-  induction n with n ih, rw iterate_zero,
-  simp [*, iterate_one]
-end
+  by induction n with n ih; simp [iterate_zero, *, iterate_one]
 
 def step_n (n : ℕ) := iterate next_gen a n
 
@@ -397,39 +325,18 @@ def count (c : α) : ℕ := count_grid a.g c
 lemma count_grid_eq_count {x} : count a x = count_grid a.g x := rfl
 
 lemma count_cast_foa (a : agrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
-begin
-  simp [count_grid],
-  unfold_coes, 
-  rw gen_aof_eq_gen,
-  rw gen_foa_eq_gen
-end
+  by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
 lemma count_cast_aof (a : fgrid α) {x} : count_grid ↑a x = count_grid a x :=
-begin
-  simp [count_grid],
-  unfold_coes, 
-  rw gen_foa_eq_gen,
-  rw gen_aof_eq_gen
-end
+  by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
 lemma yield_at_nonempty {p} {a : cautomaton α}
   (h : yield_at a p ≠ a.empty) : p ∈ a.g :=
 begin
-  by_cases h₁ : p ∈ a.g,
-    {
-      exact h₁
-    },
-    {
-      exfalso,
-      unfold yield_at default_if_nex at h,
-      rw dif_neg at h,
-        {
-          contradiction
-        },
-        {
-          exact h₁
-        }
-    }
+  by_contradiction contra,
+  unfold yield_at default_if_nex at h,
+  rw dif_neg contra at h,
+  contradiction
 end
 
 end counting
