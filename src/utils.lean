@@ -1457,7 +1457,7 @@ begin
         {omega},
         {rw [← int.coe_nat_le_coe_nat_iff, nat_abs_of_nonneg]; omega}
     },
-    {simp [(≥)], omega}
+    {simp [ge_from_le], omega}
 end
 
 lemma count_eq_iff {α : Type} [decidable_eq α] {l₁ l₂ : list α}
@@ -1502,21 +1502,15 @@ begin
         {dsimp at h, injection h},
       dsimp at h₁, injection h₁ with h₁l h₁r,
       rw mem_cons_iff at h₂,
-      cases h₂,
-        {cc},
-        {exact ih h₃ h₁r h₂}
+      cases h₂, {cc}, {exact ih h₃ h₁r h₂}
     }
 end
 
-lemma mul_one_less {a b : ℤ} : a * b = a + (b - 1) * a :=
-begin
-  rw [sub_mul, add_sub],
-  simp [mul_comm]
-end
+lemma mul_one_less {a b : ℤ} : a * b = a + (b - 1) * a := by ring
 
 lemma mul_one_less_n {a b : ℕ} (h : b > 0) : a * b = a + (b - 1) * a :=
 begin
-  simp [(>)] at h, 
+  simp [gt_from_lt] at h,
   rw [nat.mul_sub_right_distrib, ← nat.add_sub_assoc],
     {simp [mul_comm]},
     {
@@ -1534,16 +1528,13 @@ lemma nth_split {α : Type} {l₁ l₂ : list α} {n} (h : n < length l₁):
 begin
   induction n with n ih generalizing l₁ l₂,
     {
-      cases l₁,
-        {simp, cases h},
-        {refl}
+      cases l₁, {simp, cases h}, {refl}
     },
     {
       cases l₁ with x xs,
         {simp, cases h},
         {
-          simp at *,
-          apply ih,
+          simp at *, apply ih,
           rw [add_comm, add_one] at h,
           exact lt_of_succ_lt_succ h
         }
