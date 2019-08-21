@@ -1712,6 +1712,30 @@ begin
     }
 end
 
+lemma p_in_g_iff_a_f {α : Type} {g₁ : agrid₀ α} {g₂ : fgrid α} {p}
+                     (h₁ : g₁.r = g₂.r)
+                     (h₂ : g₁.c = g₂.c)
+                     (h₃ : g₁.o = g₂.o) : p ∈ g₁ ↔ is_in_grid' g₂ p :=
+begin
+  rcases g₁ with ⟨⟨r₁, c₁, gh₁, d₁⟩, o₁⟩,
+  rcases g₂ with ⟨r₂, c₂, gh₂, o₂, d₂⟩,
+  simp [flip, is_in_grid'] at *,
+  split; intros; unfold_projs at *;  
+  subst h₁; subst h₂; subst h₃; finish
+end
+
+lemma p_in_g_iff_f_a {α : Type} {g₁ : fgrid α} {g₂ : agrid₀ α} {p}
+                     (h₁ : g₁.r = g₂.r)
+                     (h₂ : g₁.c = g₂.c)
+                     (h₃ : g₁.o = g₂.o) : p ∈ g₁ ↔ is_in_grid' g₂ p :=
+begin
+  rcases g₁ with ⟨r₁, c₁, gh₁, o₁, d₁⟩,
+  rcases g₂ with ⟨⟨r₂, c₂, gh₂, d₂⟩, o₂⟩,
+  simp [flip, is_in_grid'] at *,
+  split; intros; unfold_projs at *;
+  subst h₁; subst h₂; subst h₃; finish
+end
+
 end finite_grid
 
 section grid_instances

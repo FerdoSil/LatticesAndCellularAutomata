@@ -5,7 +5,7 @@ namespace utils
 open int nat list
 
 lemma gt_and_gt_of_mul_gt {m n : ℕ} (h : m * n > 0) : m > 0 ∧ n > 0 :=
-  by simp only [(>)] at *;
+  by simp only [gt_from_lt] at *;
   exact ⟨
     pos_of_mul_pos_right h (nat.zero_le _),
     pos_of_mul_pos_left h (nat.zero_le _)
@@ -15,7 +15,7 @@ lemma mul_gt_of_gt_gt {m n : ℕ} (h₁ : m > 0) (h₂ : n > 0) : m * n > 0 :=
   mul_pos h₁ h₂
 
 lemma lt_add_coe_of_gt_zero {x : ℤ} {y : ℕ} (h : y > 0) : x < x + ↑y :=
-  lt_add_of_pos_right _ (by simpa [(>), h])
+  lt_add_of_pos_right _ (by simpa [gt_from_lt, h])
 
 lemma lt_of_add_lt {m n k : ℕ} (h : m + n < k) : m < k :=
 begin
