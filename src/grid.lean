@@ -1,6 +1,6 @@
 import utils
-import data.vector data.list data.int.basic tactic.omega tactic.monotonicity
-       tactic.linarith
+import data.vector data.list data.int.basic tactic.omega data.fin
+       tactic.linarith tactic.sanity_check
 
 open utils
 
@@ -11,7 +11,7 @@ class relative_grid (α : Type*) :=
   (rows    : α → ℕ)
   (cols    : α → ℕ)
   (unempty : Πg, rows g * cols g > 0)
-  (data    : Πg, bounded 0 (rows g) → bounded 0 (cols g) → carrier)
+  (data    : Πg, fin (rows g) → fin (cols g) → carrier)
 
 class grid (α : Type*) extends relative_grid α :=
   (bl : α → point)
@@ -90,7 +90,7 @@ def cols_of_box (bb : bounding_box) : ℕ :=
 private def data_option (g : α) (x y : ℕ) :=
   if h : is_bounded 0 (cols g) y
   then if h₁ : is_bounded 0 (rows g) x
-       then some $ relative_grid.data g ⟨x, h₁⟩ ⟨y, h⟩
+       then some $ relative_grid.data g ⟨x, h₁.2⟩ ⟨y, h.2⟩
        else none
   else none
 
@@ -104,9 +104,9 @@ variables {α : Type*} [grid α] {g : α}
 
 private theorem data_data_option {x y : ℕ}
   (h₁ : is_bounded 0 (rows g) y) (h₂ : is_bounded 0 (cols g) x) :
-  some (relative_grid.data g ⟨y, h₁⟩ ⟨x, h₂⟩) = data_option g y x :=
-  by unfold data_option; repeat { rw dif_pos; try { unfold is_bounded } };
-     simp [h₂.2]
+  some (relative_grid.data g ⟨y, h₁.2⟩ ⟨x, h₂.2⟩) = data_option g y x :=
+  by unfold data_option; repeat { rw dif_pos; try { simp [is_bounded, h.2] } };
+     simpa
 
 lemma rows_of_box_pos {bb : bounding_box} : rows_of_box bb > 0 :=
 let ⟨⟨_, y₁⟩, ⟨_, y₂⟩, h⟩ := bb in
@@ -145,7 +145,7 @@ begin
   rwa [← int.coe_nat_mul, int.coe_nat_lt_coe_nat_iff]
 end
 
-lemma idx_mod_cols_bounded {n} (h : n < size g) :
+lemma idx_mod_cols_bounded {n : ℕ} :
   (bl g).x + ↑n % ↑(cols g) < (gtr g).x :=
 by simp [expand_gtr]; exact int.mod_lt_of_pos _ coe_cols_pos
 
@@ -164,8 +164,8 @@ theorem bbox_of_grid_p₁ : (bbox_of_grid g).p₁ = (gbl g) := rfl
 theorem bbox_of_grid_p₂ : (bbox_of_grid g).p₂ = (gtr g) := rfl
 
 structure relative_point (g : α) :=
-  (x : bounded 0 (rows g))
-  (y : bounded 0 (cols g))
+  (x : fin (rows g))
+  (y : fin (cols g))
 
 def relative_point_str (g : α) : relative_point g → string
   | ⟨x, y⟩ := "[" ++ to_string x ++ ", " ++ to_string y ++ "]"
@@ -199,15 +199,13 @@ lemma gblx_lt_gtrx : (gbl g).x < (gtr g).x :=
 def relpoint_of_gpoint {g : α} (p : grid_point g) : relative_point g :=
     ⟨
       ⟨int.nat_abs (p.1.1 - (tl g).y),
-      have h : p.1.1 - (tl g).y ≥ 0,
-        {
-          apply le_sub_iff_add_le.2,
-          let lbx := p.1.2.1,
-          simp [expand_gtr] at lbx, simpa [tl]
-        },
-      ⟨
-        (int.le_of_coe_nat_le_coe_nat $ (int.nat_abs_of_nonneg h).symm ▸ h),
-        ((int.coe_nat_lt_coe_nat_iff _ _).1 $
+       have h : p.1.1 - (tl g).y ≥ 0,
+         {
+           apply le_sub_iff_add_le.2,
+           let lbx := p.1.2.1,
+           simp [expand_gtr] at lbx, simpa [tl]
+         },
+       ((int.coe_nat_lt_coe_nat_iff _ _).1 $
         (int.nat_abs_of_nonneg h).symm ▸
         begin
           simp only [tl],
@@ -215,14 +213,11 @@ def relpoint_of_gpoint {g : α} (p : grid_point g) : relative_point g :=
           conv { to_lhs, simp only [zero_add] },
           simp [add_lt_add_iff_right, sub_lt, p.1.2.2]
         end)
-      ⟩
       ⟩,
       ⟨int.nat_abs (p.2.1 - (tl g).x),
-      have h : p.2.1 - (tl g).x ≥ 0,
-        from le_sub_iff_add_le.2 (by simp [tl, p.2.2.1]),
-      ⟨
-        (int.le_of_coe_nat_le_coe_nat $ (int.nat_abs_of_nonneg h).symm ▸ h),
-        (iff.elim_left (int.coe_nat_lt_coe_nat_iff _ _) $
+       have h : p.2.1 - (tl g).x ≥ 0,
+         from le_sub_iff_add_le.2 (by simp [tl, p.2.2.1]),
+       (iff.elim_left (int.coe_nat_lt_coe_nat_iff _ _) $
         (int.nat_abs_of_nonneg h).symm ▸
         begin
           let uby := p.2.2.2,
@@ -230,10 +225,8 @@ def relpoint_of_gpoint {g : α} (p : grid_point g) : relative_point g :=
           simp only [tl],
           rw [sub_lt_iff_lt_add, add_comm],
           exact uby
-        end
-        )
-      ⟩
-      ⟩
+        end)
+      ⟩ 
     ⟩
 
 def gpoint_of_relpoint {g : α} (p : relative_point g) : grid_point g :=
@@ -241,13 +234,13 @@ def gpoint_of_relpoint {g : α} (p : relative_point g) : grid_point g :=
     ⟨(tl g).y + p.1.1,
       ⟨
         by simp [tl, expand_gtr],
-        by simp [tl, expand_gtr, p.1.2.2]
+        by rcases p with ⟨⟨_, h⟩, _⟩; simp only [tl, expand_gtr, h]; linarith
       ⟩
     ⟩,
     ⟨(tl g).x + p.2.1,
       ⟨
         by simp [tl],
-        by simp [tl, expand_gtr, p.2.2.2]
+        by rcases p with ⟨⟨_, _⟩, ⟨_, h⟩⟩; simp only [tl, expand_gtr, h]; linarith
       ⟩
     ⟩
   ⟩
@@ -406,8 +399,7 @@ instance rg_grid₀ {α : Type} :
     λg y x,
       g.data.nth ⟨
         y.1 * g.c + x.1,
-        linearize_array (is_bounded_of_bounds x.2.1 x.2.2)
-                        (is_bounded_of_bounds y.2.1 y.2.2)
+        linearize_array (⟨zero_le _, x.2⟩) (⟨zero_le _, y.2⟩)
       ⟩    
 }
 
@@ -421,14 +413,13 @@ instance rg_agrid₀ {α : Type} :
     λg y x,
       g.data.nth ⟨
         y.1 * g.c + x.1,
-        linearize_array (is_bounded_of_bounds x.2.1 x.2.2)
-                        (is_bounded_of_bounds y.2.1 y.2.2)
+        linearize_array ⟨zero_le _, x.2⟩ ⟨zero_le _, y.2⟩
       ⟩   
 }
 
 private lemma absolute_bounds {o : ℤ} {r : ℕ}
-                              (x : bounded 0 r) : o - ↑r + ↑x < o :=
-  by cases x with _ h; simp; exact h.2
+                              (x : fin r) : o - ↑r + ↑x < o :=
+  by simp; rw [← sub_eq_add_neg, sub_lt_zero]; cases x; finish
 
 instance rg_fgrid {α : Type} :
   relative_grid (fgrid α) := {
@@ -443,8 +434,7 @@ instance rg_fgrid {α : Type} :
            ⟨g.o.x + y,
             ⟨le_add_of_nonneg_right $ by cases x; unfold_coes,
              add_lt_add_left (
-               let ⟨_, ⟨_, h⟩⟩ := y in
-               iff.elim_right int.coe_nat_lt h
+               iff.elim_right int.coe_nat_lt y.2
             ) g.o.x⟩⟩
 }
 
@@ -625,7 +615,7 @@ begin
     {exact h₅.left.right}
 end
 
-def gip_g_in_grid {g : α} :
+lemma gip_g_in_grid {g : α} :
   ∀{a}, a ∈ gip_g g → a ∈ (bbox_of_grid g) :=
   assume a h, gip_in_grid h
 
@@ -914,28 +904,6 @@ lemma dec_grid_len_eq_indices_len :
   length (℘ g) = length (gip_g g) :=
   by simp [length_generate, length_gip_g]
 
-private lemma linear_correct {g : α} {p : grid_point g} :
-  z_of_bounded ((relpoint_of_gpoint p).x) * cols g +
-  z_of_bounded ((relpoint_of_gpoint p).y) < length (℘ g) :=
-begin
-  cases p with x y,
-  simp [
-    relpoint_of_gpoint, length_generate, grid_cols, grid_rows, z_of_bounded
-  ], rw add_comm,
-  rw cols_eq_trx_sub_blx, rw rows_eq_bly_sub_try,
-  revert x, revert y,
-  generalize h₂ : (bl g).x = x₁, generalize h₃ : (gtr g).x = x₂,
-  generalize h₄ : (bl g).y = y₁, generalize h₅ : (gtr g).y = y₂, intros,
-  rcases y with ⟨h₁, h₂, h₃⟩, rcases x with ⟨h₄, h₅, h₆⟩,
-  apply linearize_array; split; simp [z_of_bounded];
-  rw [← int.coe_nat_lt];
-  try { rw cols_eq_trx_sub_blx }; try { rw rows_eq_bly_sub_try };
-  repeat { rw int.nat_abs_of_nonneg };
-  repeat { rw ← sub_eq_add_neg }; simp [ge_from_le]; try { cc };
-  apply le_add_of_neg_add_le; simp; try { cc }; apply int.le_of_lt;
-  apply lt_of_le_of_lt; assumption
-end
-
 def agrid_of_fgrid {α : Type} (g : fgrid α) : agrid₀ α :=
     ⟨⟨g.r, g.c, g.h, ⟨generate g, length_generate_eq_size _⟩⟩, g.o⟩
 
@@ -1160,7 +1128,7 @@ theorem nth_generate {n} (H) :
     ⟩⟩,
     ⟨(bl g).x + n % cols g, ⟨
       by simp,
-      idx_mod_cols_bounded (by rwa length_generate_eq_size at H)⟩
+      idx_mod_cols_bounded⟩
   ⟩⟩ :=
 begin
   rw length_generate at H,
@@ -1174,7 +1142,7 @@ begin
     nth_le_nth this, inject_into_bounded, make_bounded_idx, make_bounded,
     nth_le_gip_g, grid_point_of_prod, data_option
   ],
-  repeat { rw dif_pos }, apply congr_arg,
+  repeat { rw dif_pos },
   simp [
     abs_data, relpoint_of_gpoint, prod_of_rel_point, uncurry, expand_gtr
   ]
@@ -1189,7 +1157,7 @@ theorem nth_generate' {n} (h : n < length ℘ g) :
     ⟩⟩,
     ⟨(bl g).x + n % cols g, ⟨
       by simp,
-      idx_mod_cols_bounded (by rwa length_generate_eq_size at h)⟩
+      idx_mod_cols_bounded⟩
   ⟩⟩) := by simp [nth_le_nth h, congr_arg, nth_generate]
 
 lemma generate_eq_data {α : Type} (g : agrid₀ α) :
@@ -1345,36 +1313,34 @@ theorem grid_eq_iff_f_f {α : Type} {g₁ g₂ : fgrid α}
   (horig : g₁.o = g₂.o) : g₁ = g₂ ↔ ℘ g₁ = ℘ g₂ :=
   ⟨λh, h ▸ rfl, generate_inj_f_f hrows hcols horig⟩
 
-def row (n : bounded 0 (relative_grid.rows g)) :
-  (bounded 0 (relative_grid.cols g)) → relative_grid.carrier α :=
+def row (n : fin (relative_grid.rows g)) :
+  (fin (relative_grid.cols g)) → relative_grid.carrier α :=
   relative_grid.data g n
 
-def col (n : bounded 0 (relative_grid.cols g)) :
-  (bounded 0 (relative_grid.rows g)) → relative_grid.carrier α :=
+def col (n : fin (relative_grid.cols g)) :
+  (fin (relative_grid.rows g)) → relative_grid.carrier α :=
   flip (relative_grid.data g) n
 
 def top :=
   row g ⟨
     0,
-    ⟨le_refl _, and.elim_left (gt_and_gt_of_mul_gt (relative_grid.unempty g))⟩
+    and.elim_left (gt_and_gt_of_mul_gt (relative_grid.unempty g))
   ⟩
 
 def bot :=
   row g ⟨nat.pred (relative_grid.rows g),
-         ⟨nat.zero_le _,
-          nat.pred_lt (ne_of_gt (gt_and_gt_of_mul_gt (relative_grid.unempty g)).1)⟩
+         nat.pred_lt (ne_of_gt (gt_and_gt_of_mul_gt (relative_grid.unempty g)).1)
         ⟩
 
 def left :=
   have h : relative_grid.cols g > 0,
     from (gt_and_gt_of_mul_gt (relative_grid.unempty g)).2,
-  col g ⟨0, and.intro (le_refl _) h⟩
+  col g ⟨0, h⟩
 
 def right :=
   have h : relative_grid.cols g > 0,
     from (gt_and_gt_of_mul_gt (relative_grid.unempty g)).2,
-  col g ⟨nat.pred (relative_grid.cols g),
-         ⟨nat.zero_le _, nat.pred_lt (ne_of_gt h)⟩⟩
+  col g ⟨nat.pred (relative_grid.cols g), nat.pred_lt (ne_of_gt h)⟩
 
 def grid_bounds : bounding_box :=
   ⟨gbl g, gtr g, grid_is_bounding_box⟩
@@ -1518,14 +1484,13 @@ begin
   have hl₂ : length (℘ g₂) = g₂.r * g₂.c,
     from length_generate _,
   cases g₁ with g₁r g₁c g₁h g₁o g₁d,
-  cases g₂ with g₂ g₂o, cases g₂ with g₂r g₂c g₂h g₂d,
+  rcases g₂ with ⟨⟨g₂r, g₂c, g₂h, ⟨d₂, hd₂⟩⟩, g₂o⟩,
   dsimp at hrows hcols horig hl₁ hl₂,
   subst hrows, subst hcols, subst horig,
   unfold_coes, simp [fgrid_of_agrid],
   unfold_coes at h, rw gen_foa_eq_gen at h,
   ext x y,
   cases x with x xbounds, cases y with y ybounds,
-  cases g₂d with d₂ hd₂,
   let tly := g₁o.y - g₁r,
   let tlx := g₁o.x,
   let i := |x - tly| * g₁c + |y - tlx|,
@@ -1708,7 +1673,7 @@ begin
         nth_generate, abs_data, data, expand_gtr, bl, (∘),
         relpoint_of_gpoint, prod_of_rel_point, uncurry, rows, cols, tl,
         rows_of_box, cols_of_box
-      ], simp, unfold_coes, refl
+      ], simp, unfold_coes
     }
 end
 

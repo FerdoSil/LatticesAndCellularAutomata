@@ -82,7 +82,7 @@ private lemma col_even {n} (h : n % 2 = 0) {a} {g}
   (h₃ : a = col_gol) : step_n a n = a :=
 begin
   unfold step_n,
-  rw @periode_cycle _ _ _ _ 2 dec_trivial,
+  rw @periode_cycle _ _ _ _ 2,
     {
       rw [h, iterate_zero]
     },
@@ -101,7 +101,7 @@ private lemma col_row {n} (h : n % 2 = 1) {a} {g}
   (h₃ : a = col_gol) : step_n a n = row_gol :=
 begin
   unfold step_n,
-  rw @periode_cycle _ _ _ _ 2 dec_trivial,
+  rw @periode_cycle _ _ _ _ 2,
     {
       rw h, rw iterate_one,
       rw iterate_zero, rw h₃,

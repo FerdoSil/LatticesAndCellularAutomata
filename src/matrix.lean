@@ -116,6 +116,7 @@ begin
           simp [z_of_bounded],
           repeat { rw ← coe_is_z_of_bounded },
           simp only [vector.to_list],
+          unfold_coes, 
           simp only [z_of_bounded],
           conv { to_rhs, simp only [mul_comm] },
           rw nth_agrid_of_fgrid,

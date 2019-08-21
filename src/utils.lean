@@ -1,4 +1,5 @@
 import data.int.basic data.list data.vector tactic.omega tactic.linarith
+       tactic.sanity_check
 
 namespace utils 
 
@@ -229,11 +230,11 @@ instance {a b : point} : decidable (a ↗ b) :=
   let ⟨x, y⟩ := a in
   let ⟨x₁, y₁⟩ := b in by simp [(↗)]; apply_instance
 
-instance {a b : point} : is_irrefl point grid_sorted := {
+instance : is_irrefl point grid_sorted := {
   irrefl := λ⟨x, y⟩, by simp [(↗)]
 }
 
-instance {a b : point} : is_trans point grid_sorted := {
+instance : is_trans point grid_sorted := {
   trans := λ⟨x, y⟩ ⟨x₁, y₁⟩ ⟨x₂, y₂⟩ ⟨h, h₁⟩ ⟨h₂, h₃⟩,
              begin
                simp [(↗)] at *,
@@ -241,12 +242,11 @@ instance {a b : point} : is_trans point grid_sorted := {
              end
 }
 
-instance {a b : point}
-         [c : is_irrefl point grid_sorted]
+instance [c : is_irrefl point grid_sorted]
          [c₁ : is_trans point grid_sorted] :
          is_strict_order point grid_sorted := by constructor; assumption
 
-def le_of_zero_le_add_le (a b c : ℤ) (h₁ : 0 ≤ b) (h₂ : a + b ≤ c) : a ≤ c :=
+lemma le_of_zero_le_add_le (a b c : ℤ) (h₁ : 0 ≤ b) (h₂ : a + b ≤ c) : a ≤ c :=
   by omega
 
 lemma grid_bounded_iff {p₁ p₂ : point} : p₁↗p₂ ↔ (p₁.x < p₂.x ∧ p₂.y < p₁.y) :=
@@ -1056,9 +1056,9 @@ def iterate {α : Type*} (f : α → α) (x : α) : ℕ → α
   | 0 := x
   | (k + 1) := f (iterate k)
 
-def iterate_zero {α : Type*} {f : α → α} {x : α} : iterate f x 0 = x := rfl
+lemma iterate_zero {α : Type*} {f : α → α} {x : α} : iterate f x 0 = x := rfl
 
-def iterate_one {α : Type*} {n : ℕ} {f : α → α} {x : α} :
+lemma iterate_one {α : Type*} {n : ℕ} {f : α → α} {x : α} :
   iterate f x (n + 1) = f (iterate f x n) := rfl
 
 lemma iterate_iterate_add {α : Type*} {f : α → α} {x : α} {m n : ℕ} :
@@ -1151,7 +1151,7 @@ begin
 end
 
 lemma periode_cycle {α : Type*} {f : α → α} {x : α} {m n : ℕ}
-  (hₙ : n ≠ 0) (h : iterate f x n = x) : iterate f x m = iterate f x (m % n) :=
+  (h : iterate f x n = x) : iterate f x m = iterate f x (m % n) :=
 begin
   have : m = m % n + n * (m / n), from (nat.mod_add_div m n).symm,
   generalize h₁ : iterate f x (m % n) = rhs,
@@ -1159,7 +1159,7 @@ begin
   subst h₁, congr, rw iterate_id_of_x, exact h
 end
 
-def mod_self {n : ℕ} : n % n = 0 :=
+lemma mod_self {n : ℕ} : n % n = 0 :=
 begin
   cases n with n,
     {refl},
@@ -1362,7 +1362,7 @@ end
 lemma nat_abs_nonneg {x} : 0 ≤ int.nat_abs x :=
   by cases x; simp; apply nat.zero_le
 
-lemma maps_f_ext_eq {α β : Type} {x : α} {xs : list α} {f g : α → β}
+lemma maps_f_ext_eq {α β : Type} {xs : list α} {f g : α → β}
   (h : ∀x ∈ xs, f x = g x) : map f xs = map g xs :=
 begin
   induction xs with y ys ih,
