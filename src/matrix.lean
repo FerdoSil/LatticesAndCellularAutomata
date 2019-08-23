@@ -24,6 +24,8 @@ section operations
 
 variables {m n o p : ℕ} {α β γ δ : Type}
 
+open relative_grid grid
+
 lemma matrix_unempty {m₁ : matrix m n α} : m * n > 0 :=
   by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, _, _⟩; finish
 
@@ -108,26 +110,22 @@ begin
         },
         {
           intros n h₁ h₂, rw ← option.some_inj,
-          rw nth_generate_a,
-          rw nth_generate_f,
-          simp [abs_data_eq_nth_a, grid_point_to_fin_eq, tl, relative_grid.cols, grid.bl, relative_grid.rows],
-          repeat { rw vector.nth_eq_nth_le },
-          repeat { rw ← list.nth_le_nth },
-          repeat { rw ← coe_is_z_of_bounded },
-          simp [z_of_bounded],
-          repeat { rw ← coe_is_z_of_bounded },
-          simp only [vector.to_list],
-          unfold_coes, 
-          rw ← list.nth_le_nth,
-          conv { to_rhs, simp only [mul_comm] },
-          rw nth_agrid_of_fgrid,
-          rw nth_generate',
+          rw [nth_generate_a, nth_generate_f],
           simp [
-            abs_data, relpoint_of_gpoint, prod_of_rel_point, grid.bl, tl,
-            gtr, tr, grid.bl, function.uncurry, relative_grid.rows,
+            abs_data_eq_nth_a, grid_point_to_fin_eq, tl, cols, bl, rows,
+            vector.nth_eq_nth_le, vector.to_list
+          ],
+          unfold_coes,
+          rw [← list.nth_le_nth, nth_agrid_of_fgrid],
+          conv { to_rhs, simp only [mul_comm] },
+          
+          rw nth_generate_f',
+          simp [
+            abs_data, relpoint_of_gpoint, prod_of_rel_point, tl,
+            expand_gtr, bl, function.uncurry, relative_grid.rows,
             relative_grid.cols, relative_grid.data
           ],
-          unfold_coes, simp [z_of_bounded],
+          unfold_coes,
           rw vector.nth_eq_nth_le,
           rw list.nth_le_nth,
           apply congr_arg, congr' 1, simp,
