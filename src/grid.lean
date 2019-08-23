@@ -1176,6 +1176,86 @@ theorem nth_generate' {n} (h : n < length ℘ g) :
       idx_mod_cols_bounded⟩
   ⟩⟩) := by simp [nth_le_nth h, congr_arg, nth_generate]
 
+lemma abs_data_eq_nth_a {α : Type} {g : agrid₀ α} {p} :
+  abs_data g p = vector.nth g.data (grid_point_to_fin p) :=
+  by simpa [
+       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data,
+       grid_point_to_fin, rel_point_to_fin
+     ]
+
+lemma abs_data_eq_nth_f {α : Type} {g : fgrid α} {p} :
+  abs_data g p = g.data p.1 p.2 :=
+begin
+  rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
+  simp only [
+      abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data
+  ],
+  unfold_coes, simp only [fin.val, of_nat_eq_coe],
+  have h₁ : x - (tl g).y ≥ 0, by rw tly_eq_try; linarith,
+  have h₂ : y - (tl g).x ≥ 0, by simp [tl]; linarith,
+  congr; rw int.nat_abs_of_nonneg; try { assumption };
+  simp only [tl, rows, bl];
+  linarith
+end
+
+lemma nth_generate_a {α : Type} {g : agrid₀ α} {n} (H) :
+  some (nth_le (℘ g) n H) =
+  nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c ) :=
+begin
+  rcases g with ⟨⟨r, c, h, ⟨d, hd⟩⟩, o⟩,
+  rw [nth_le_nth, nth_generate],
+  simp [
+    abs_data_eq_nth_a, grid_point_to_fin_eq, expand_gtr, bl, tl,
+    rows, cols, vector.nth
+  ],
+  simp [hd],
+  rw ← int.coe_nat_lt_coe_nat_iff, simp,
+  have : ↑c ≠ (0 : ℤ),
+    assume contra, by simp at contra; rw contra at h; linarith,
+  rw nat_abs_of_nonneg (mod_nonneg _ this), norm_cast,
+  rw [int.coe_nat_mul, int.coe_nat_div, mul_comm, mod_add_div],
+  simp [length_generate, rows, cols] at H,
+  simp [H], norm_cast, exact H
+end
+
+lemma nth_generate_a' {α : Type} {g : agrid₀ α} {n} (H : n < length ℘ g):
+  nth (℘ g) n =
+  nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c) :=
+  by simp [nth_le_nth, nth_generate_a, H]
+
+lemma nth_generate_f {α : Type} {g : fgrid α} {n} (H) :
+  some (nth_le (℘ g) n H) =
+  g.data ⟨g.o.y + (↑n / ↑g.c - ↑g.r),
+    ⟨by simp [bl, rows, cols],
+    begin
+      simp [-sub_eq_add_neg, bl, rows, cols], norm_cast,
+      simp [length_generate, grid_rows, grid_cols, rows, cols] at H,
+      rw mul_comm at H,
+      exact nat.div_lt_of_lt_mul H
+    end⟩
+⟩ ⟨(bl g).x + ↑n % ↑(cols g),
+    ⟨by simp [bl], by simp [bl]; exact mod_lt_of_pos _ coe_cols_pos⟩⟩ :=
+begin
+  rcases g with ⟨r, c, h, o, d⟩,
+  rw [nth_generate],
+  simp [bl, rows, cols, abs_data_eq_nth_f, expand_gtr],
+  refl
+end
+
+lemma nth_generate_f' {α : Type} {g : fgrid α} {n} (H : n < length ℘ g) :
+  nth (℘ g) n =
+  g.data ⟨g.o.y + (↑n / ↑g.c - ↑g.r),
+    ⟨by simp [bl, rows, cols],
+    begin
+      simp [-sub_eq_add_neg, bl, rows, cols], norm_cast,
+      simp [length_generate, grid_rows, grid_cols, rows, cols] at H,
+      rw mul_comm at H,
+      exact nat.div_lt_of_lt_mul H
+    end⟩
+⟩ ⟨(bl g).x + ↑n % ↑(cols g),
+    ⟨by simp [bl], by simp [bl]; exact mod_lt_of_pos _ coe_cols_pos⟩⟩ :=
+  by simp [nth_le_nth, nth_generate_f, H]
+
 lemma generate_eq_data {α : Type} (g : agrid₀ α) :
   ℘ g = g.data.to_list :=
 begin
@@ -1185,32 +1265,22 @@ begin
     by simp [rows, cols],
   apply ext_le (eq.trans h₁ h₂.symm) (λi hi₁ hi₂, _),
   rw h₁ at hi₁, rw h₂ at hi₂,
-  have : hi₁ = hi₂, by cc, subst this, dedup,
+  have : hi₁ = hi₂, from rfl, subst this, dedup,
   rw ← option.some_inj, repeat { rw ← nth_le_nth },
-  clear hi₁, clear hi₂, rename hi₁_1 hi, clear h₁, clear h₂,
-  cases g with g o, cases g with r c h data,
+  rename hi₁_1 hi,
+  rcases g with ⟨⟨r, c, h, ⟨data, hd⟩⟩, o⟩,
   simp [-sub_eq_add_neg, rows, cols] at *,
-  cases data with data hd,
-  rw [nth_le_nth, nth_generate],
-  simp [
-    nth_le_nth, nth_generate, abs_data, relpoint_of_gpoint,
-    prod_of_rel_point, uncurry,
-    expand_gtr, bl, tl, rows, cols, relative_grid.data, vector.nth
-  ],
-  rw nth_le_nth,
-  have : |↑i % ↑c| + |↑r + (↑i / ↑c + -↑r)| * c = i,
+  rw [nth_le_nth (by simpa [length_generate_eq_sizes]), nth_generate_a],
+  rw nth_le_nth hi₂, simp,
+  have : |↑i % ↑c| + |↑i / ↑c| * c = i,
     {
       rw [← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add, int.coe_nat_mul],
-      repeat { rw nat_abs_of_nonneg }, rw [add_mul, add_mul],
-      simp,
-      rw [mul_comm, mod_add_div], rw ← sub_eq_add_neg,
-      rw [add_sub_cancel'_right, ← int.coe_nat_div],
-      apply coe_zero_le,
-      rw ← int.coe_nat_mod,
-      exact coe_zero_le _,
+      have eq₁ : ↑i % ↑c ≥ (0 : ℤ), by simp [ge_from_le]; linarith,
+      have eq₂ : ↑r + (↑i / ↑c + -↑r) ≥ (0 : ℤ), by simp [int.coe_nat_div],
+      repeat { rw nat_abs_of_nonneg; try { assumption } }, 
+      rw [mul_comm, mod_add_div]
     },
-  repeat { rw ← nth_le_nth }, simp at this, simp only [this], rwa hd,
-  simpa [length_generate_eq_size, size, rows, cols]
+  repeat { rw ← nth_le_nth }, simp [this]
 end
 
 private theorem generate_inj_a_a {α : Type} {g₁ g₂ : agrid₀ α}
@@ -1223,7 +1293,7 @@ begin
   rcases g₁ with ⟨⟨g₁r, g₁c, g₁h, g₁d⟩, g₁o⟩,
   rcases g₂ with ⟨⟨g₂r, g₂c, g₂h, g₂d⟩, g₂o⟩,
   dsimp at hrows hcols horig h,
-  subst hrows, subst hcols, subst horig,
+  substs hrows hcols horig,
   congr, exact vector.to_list_inj h
 end
 
@@ -1232,28 +1302,6 @@ theorem grid_eq_iff_a_a {α : Type} {g₁ g₂ : agrid₀ α}
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : g₁ = g₂ ↔ ℘ g₁ = ℘ g₂ :=
   ⟨λh, h ▸ rfl, generate_inj_a_a hrows hcols horig⟩
-
-lemma abs_data_eq_nth_a {α : Type} {g : agrid₀ α} {p} :
-  abs_data g p = vector.nth g.data (grid_point_to_fin p) :=
-  by simpa [
-       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data,
-       grid_point_to_fin, rel_point_to_fin
-     ]
-
-lemma abs_data_eq_nth_f {α : Type} {g : fgrid α} {p} :
-  abs_data g p = g.data p.1 p.2 :=
-  begin
-    rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
-    simp only [
-       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data
-    ],
-    unfold_coes, simp only [fin.val, of_nat_eq_coe],
-    have h₁ : x - (tl g).y ≥ 0, by rw tly_eq_try; linarith,
-    have h₂ : y - (tl g).x ≥ 0, by simp [tl]; linarith,
-    congr; rw int.nat_abs_of_nonneg; try { assumption };
-    simp only [tl, rows, bl];
-    linarith
-  end
 
 private theorem generate_inj_f_f {α : Type} {g₁ g₂ : fgrid α}
   (hrows : g₁.r = g₂.r)
@@ -1569,37 +1617,12 @@ instance decidable_eq_f_a {α : Type} [decidable_eq α]
     by simp [grid_eq_iff_f_a, *]; apply_instance
   else is_false $ by finish
 
--- section ext
-
--- variables {β : Type} {g₁ g₂ : agrid₀ β}
-
--- attribute [extensionality] 
--- theorem ext (h : fin (g₁.to_grid₀.r * g₁.to_grid₀.c) =
---                  fin (g₂.to_grid₀.r * g₂.to_grid₀.c)):
---   (∀i, g₁.data.nth i = g₂.data.nth (cast h i)) → g₁ = g₂ :=
--- assume h,
--- begin
---   rcases g₁ with ⟨⟨g₁r, g₁c, g₁h, ⟨g₁d, g₁dh⟩⟩, g₁o⟩,
---   rcases g₂ with ⟨⟨g₂r, g₂c, g₂h, ⟨g₂d, g₂dh⟩⟩, g₂o⟩,
---   rw grid_eq_iff_a_a,
---     {
---       simp at *,
---       repeat { rw generate_eq_data },
---       apply list.ext_le, admit,
---       intros i h₁ h₂,
---       specialize h ⟨i, _⟩,
---       admit, admit
---     }, admit, admit, admit,
--- end
-
--- end ext
-
 lemma subgrid_self {α : Type} {g : agrid₀ α} {bb : bounding_box}
   (h : bb = {bounding_box. p₁ := bl g, p₂ := gtr g, h := grid_is_bounding_box })
   : subgrid g bb begin unfold bbox_of_grid, rw h, exact overlaid_by_refl _ end =
     g :=
 begin
-  rcases g with ⟨⟨r, c, h, d⟩, o⟩,
+  rcases g with ⟨⟨r, c, h, ⟨d, hd⟩⟩, o⟩,
   simp [h, subgrid], unfold_coes,
   rw grid_eq_iff_f_f;
     try { simp [cols_of_box, bl, expand_gtr, cols] };

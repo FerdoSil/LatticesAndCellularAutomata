@@ -95,32 +95,6 @@ def transpose (m₁ : matrix m n α) : matrix n m α :=
 theorem transpose_transpose_id (m₁ : matrix m n α) :
   transpose (transpose m₁) = m₁ :=
 begin
-  -- rcases m₁ with ⟨⟨⟨r, c, h, ⟨d, dh⟩⟩, o⟩, hr, hc⟩,
-  -- ext, admit, admit, admit,
-  -- split; intros h,
-  --   {
-  --     rename n_1 n, rename h_1 h₂,
-  --     rw generate_eq_data, simp,
-  --     simp at h₂, rw ← h₂,
-  --     congr, simp [transpose],
-  --     rw gen_aof_eq_gen, unfold_projs,
-  --   }  
-  -- -- swap 2, admit,
-  -- -- rcases m₁ with ⟨⟨⟨r, c, h, d⟩, o⟩, hr, hc⟩,
-  -- -- simp,
-  -- -- congr' 1,
-  -- --   {
-  -- --     admit
-  -- --   },
-  -- --   {
-      
-  -- --   }
-
-  
-  -- --  rw grid_eq_iff_a_a,
-  -- -- apply list.ext_le, admit,
-  -- -- intros k h₁ h₂,  
-
   cases m₁ with g h₁ h₂,
   subst h₁, subst h₂,
   unfold transpose, congr' 1,
@@ -133,24 +107,18 @@ begin
           simp [size, relative_grid.rows, relative_grid.cols]
         },
         {
-          intros n h₁ h₂,
-          repeat { rw nth_generate },
-          simp only [
-            abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point,
-            function.uncurry, gtr, tr, relative_grid.data, grid.bl,
-            relative_grid.rows, relative_grid.cols, tl, gtr, zero_add,
-            agrid_of_fgrid_c, sub_zero
-          ],
-          simp,
+          intros n h₁ h₂, rw ← option.some_inj,
+          rw nth_generate_a,
+          rw nth_generate_f,
+          simp [abs_data_eq_nth_a, grid_point_to_fin_eq, tl, relative_grid.cols, grid.bl, relative_grid.rows],
           repeat { rw vector.nth_eq_nth_le },
-          rw ← option.some_inj,
           repeat { rw ← list.nth_le_nth },
           repeat { rw ← coe_is_z_of_bounded },
           simp [z_of_bounded],
           repeat { rw ← coe_is_z_of_bounded },
           simp only [vector.to_list],
           unfold_coes, 
-          simp only [z_of_bounded],
+          rw ← list.nth_le_nth,
           conv { to_rhs, simp only [mul_comm] },
           rw nth_agrid_of_fgrid,
           rw nth_generate',
