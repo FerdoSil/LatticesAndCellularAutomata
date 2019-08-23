@@ -609,24 +609,10 @@ begin
       have h₄ : nat_abs (b - (a + 1)) = n,
         begin
           rw [← sub_sub, ← int.coe_nat_eq_coe_nat_iff],
-          have h₅ : b - a - 1 ≥ (0 : ℤ),
-            {
-              simp [(≥)],
-              rw [← add_le_add_iff_right (1 : ℤ),
-                  zero_add, ← sub_eq_add_neg,
-                  add_sub, ← sub_eq_add_neg, 
-                  sub_add_cancel, ← add_le_add_iff_right a,
-                  sub_add_cancel, add_comm],
-              exact h₃
-            },
+          have h₅ : b - a - 1 ≥ (0 : ℤ), by linarith,
           rw [nat_abs_of_nonneg h₅, ← @add_right_cancel_iff _ _ (1 : ℤ) _ _,
               sub_add_cancel],
-          have h₆ : b - a ≥ (0 : ℤ),
-            {
-              simp [(≥)],
-              rw [← sub_lt_sub_iff_right a, sub_self] at h₂,
-              exact int.le_of_lt h₂
-            },
+          have h₆ : b - a ≥ (0 : ℤ), by linarith,
           rw [← int.coe_nat_eq_coe_nat_iff, nat_abs_of_nonneg h₆] at h₁,
           exact h₁
         end,
@@ -830,13 +816,13 @@ begin
               by_cases h₂ : x ≤ foldr max y ys;
                 by_cases h₃ : x ≤ foldr min y ys; simp [h₂, h₃],
                   {
-                    simp [(≥)],
+                    simp [ge_from_le],
                     rw [← sub_eq_add_neg, le_sub_iff_add_le, zero_add],
                     exact h₂
                   },
                   {exact ih},
                   {
-                    simp [(≥)],
+                    simp [ge_from_le],
                     rw [← sub_eq_add_neg, le_sub_iff_add_le, zero_add],
                     rw not_le at h₃,
                     exact int.le_of_lt h₃
@@ -859,7 +845,7 @@ begin
 end
 
 lemma unzip_fst_empty_iff_l_empty {α β : Type} (l : list (α × β)) :
-  empty_list ((unzip l).fst) ↔ empty_list l :=
+  empty_list (unzip l).fst ↔ empty_list l :=
 begin
   split; intros h; cases l with lh lt; try {finish};
   simp [empty_list, unzip] at *,
@@ -868,7 +854,7 @@ begin
 end
 
 lemma unzip_snd_empty_iff_l_empty {α β : Type} (l : list (α × β)) :
-  empty_list ((unzip l).snd) ↔ empty_list l :=
+  empty_list (unzip l).snd ↔ empty_list l :=
 begin
   split; intros h; cases l with lh lt; try {finish};
   simp [empty_list, unzip] at *,

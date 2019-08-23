@@ -1,4 +1,4 @@
-import grid utils data.vector2
+import grid utils data.vector2 tactic.elide
 
 open utils
 
@@ -9,9 +9,23 @@ structure matrix (m n : ℕ) (α : Type) :=
   (hr : g.r = m)
   (hc : g.c = n)
 
+section ext
+
+variables {m n : ℕ} {α : Type} {m₁ m₂ : matrix m n α}
+
+theorem ext_iff : m₁.g = m₂.g ↔ m₁ = m₂ :=
+  by cases m₁; rcases m₂; simp
+
+@[extensionality] theorem ext : m₁.g = m₂.g → m₁ = m₂ := ext_iff.1
+
+end ext
+
 section operations
 
 variables {m n o p : ℕ} {α β γ δ : Type}
+
+lemma matrix_unempty {m₁ : matrix m n α} : m * n > 0 :=
+  by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, _, _⟩; finish
 
 def matrix_string [has_to_string α] (m : matrix m n α) :=
   grid_str m.g
@@ -42,6 +56,17 @@ def m₂ : matrix 2 3 ℕ :=
     (agrid₀.mk ⟨2, 3, dec_trivial, ⟨[2, 2, 2, 2, 2, 2], dec_trivial⟩⟩ ⟨0, 0⟩)
     rfl rfl
 
+instance [has_add α] : has_add (matrix m n α) := {
+  add := λm₁ m₂,
+    ⟨⟨⟨m, n, @matrix_unempty _ _ _ m₁,
+      begin
+        rcases m₁ with ⟨⟨⟨g₁r, g₁c, g₁h, g₁d⟩, g₁o⟩, hr₁, hc₁⟩,
+        rcases m₂ with ⟨⟨⟨g₂r, g₂c, g₂h, g₂d⟩, g₂o⟩, hr₂, hc₂⟩,
+        simp at hr₁ hc₁ hr₂ hc₂, substs hc₁ hr₁ hc₂ hr₂,
+        exact vector.zip_with (+) g₁d g₂d
+      end⟩, ⟨0, 0⟩⟩, rfl, rfl⟩
+}
+
 def transpose (m₁ : matrix m n α) : matrix n m α :=
   ⟨(agrid_of_fgrid ⟨
       n, m, begin
@@ -49,45 +74,53 @@ def transpose (m₁ : matrix m n α) : matrix n m α :=
               subst h₁, subst h₂,
               exact mul_comm g.r g.c ▸ g.h
             end, ⟨m₁.g.o.y - m, m₁.g.o.x + n⟩,
-      λx y, abs_data m₁.g ⟨⟨y.1,
+      λx y, abs_data m₁.g ⟨
+        ⟨y.1,
         begin
           cases y with y h, simp at h, simp [expand_gtr, grid.bl],
           have : ↑(relative_grid.rows (m₁.g)) = ↑m,
-            {
-              cases m₁ with g h₁ h₂, cases g, simp at h₁ h₂,
-              subst h₁, subst h₂, simp [relative_grid.rows]
-            },
+            by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, h₁, h₂⟩; substs h₁ h₂;
+               simp [relative_grid.rows],
           rw this, exact h
-        end⟩, ⟨x.1,
+        end⟩,
+        ⟨x.1,
         begin
           cases x with x h, simp at h, simp [expand_gtr, grid.bl],
           have : ↑(relative_grid.cols (m₁.g)) = ↑n,
-            {
-              cases m₁ with g h₁ h₂, cases g, simp at h₁ h₂,
-              subst h₁, subst h₂, simp [relative_grid.cols]
-            },
+            by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, h₁, h₂⟩; substs h₁ h₂;
+               simp [relative_grid.cols],
           rw this, exact h
         end⟩⟩⟩), by simp, by simp⟩
-
-instance [has_add α] : has_add (matrix m n α) := {
-  add := λm₁ m₂,
-    matrix.mk (agrid₀.mk ⟨m, n, begin
-                                  cases m₁ with g, cases g with g o, cases g, cc
-                                end,
-                        begin
-                          cases m₁ with g₁ hr₁ hc₁,
-                          cases g₁ with g₁ g₁o, cases g₁ with r₁ c₁ h₁ data₁,
-                          cases m₂ with g₂ hr₂ hc₂,
-                          cases g₂ with g₂ g₂o, cases g₂ with r₂ c₂ h₂ data₂,
-                          simp at hr₁ hc₁ hr₂ hc₂,
-                          subst hc₁, subst hr₁, subst hc₂, subst hr₂,
-                          exact vector.zip_with (+) data₁ data₂
-                        end⟩ ⟨0, 0⟩) rfl rfl
-}
 
 theorem transpose_transpose_id (m₁ : matrix m n α) :
   transpose (transpose m₁) = m₁ :=
 begin
+  -- rcases m₁ with ⟨⟨⟨r, c, h, ⟨d, dh⟩⟩, o⟩, hr, hc⟩,
+  -- ext, admit, admit, admit,
+  -- split; intros h,
+  --   {
+  --     rename n_1 n, rename h_1 h₂,
+  --     rw generate_eq_data, simp,
+  --     simp at h₂, rw ← h₂,
+  --     congr, simp [transpose],
+  --     rw gen_aof_eq_gen, unfold_projs,
+  --   }  
+  -- -- swap 2, admit,
+  -- -- rcases m₁ with ⟨⟨⟨r, c, h, d⟩, o⟩, hr, hc⟩,
+  -- -- simp,
+  -- -- congr' 1,
+  -- --   {
+  -- --     admit
+  -- --   },
+  -- --   {
+      
+  -- --   }
+
+  
+  -- --  rw grid_eq_iff_a_a,
+  -- -- apply list.ext_le, admit,
+  -- -- intros k h₁ h₂,  
+
   cases m₁ with g h₁ h₂,
   subst h₁, subst h₂,
   unfold transpose, congr' 1,
@@ -195,16 +228,12 @@ begin
           repeat { rw ← int.coe_nat_add },
           rw int.coe_nat_lt_coe_nat_iff,
           apply linearize_array,
-          constructor,
-          apply zero_le,
           rw nat.div_lt_iff_lt_mul,
           rw length_generate_eq_size at h₂,
           unfold size relative_grid.rows relative_grid.cols at h₂,
           exact h₂,
           have : (g.to_grid₀).c > 0, from (gt_and_gt_of_mul_gt g.h).2,
           exact this,
-          constructor,
-          apply zero_le,
           apply nat.mod_lt,
           have : (g.to_grid₀).c > 0, from (gt_and_gt_of_mul_gt g.h).2,
           exact this,
