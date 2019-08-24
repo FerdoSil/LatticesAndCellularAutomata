@@ -97,8 +97,7 @@ def transpose (m₁ : matrix m n α) : matrix n m α :=
 theorem transpose_transpose_id (m₁ : matrix m n α) :
   transpose (transpose m₁) = m₁ :=
 begin
-  cases m₁ with g h₁ h₂,
-  subst h₁, subst h₂,
+  cases m₁ with g h₁ h₂, subst h₁, subst h₂,
   unfold transpose, congr' 1,
   rw grid_eq_iff_a_a, 
     {
@@ -110,25 +109,31 @@ begin
         },
         {
           intros n h₁ h₂, rw ← option.some_inj,
-          rw [nth_generate_a, nth_generate_f],
-          simp [
-            abs_data_eq_nth_a, grid_point_to_fin_eq, tl, cols, bl, rows,
-            vector.nth_eq_nth_le, vector.to_list
-          ],
-          unfold_coes,
-          rw [← list.nth_le_nth, nth_agrid_of_fgrid],
+          rw [nth_generate_a, some_nth_le_generate_f],
+          simp [abs_data_eq_nth_a', tl, bl, vector.nth_eq_nth_le, vector.to_list],
+          rw [← with_bot.some_eq_coe, ← list.nth_le_nth, nth_agrid_of_fgrid],
           conv { to_rhs, simp only [mul_comm] },
-          
+          have : |↑n % ↑((g.to_grid₀).c)| + (g.to_grid₀).c * |↑n / ↑((g.to_grid₀).c)| <
+                list.length (((g.to_grid₀).data).val),
+            begin
+              clear h₁,
+              simp [generate_eq_data, vector.to_list] at h₂,
+              have : |↑n % ↑((g.to_grid₀).c)| + (g.to_grid₀).c * |↑n / ↑((g.to_grid₀).c)| = ↑n,
+              begin
+                have : ↑n % ↑(g.to_grid₀.c) ≥ (0 : ℤ),
+                  from int.mod_nonneg _ (ne_iff_lt_or_gt.2 (or.intro_right _ coe_cols_pos_a)),
+                have : ↑n / ↑(g.to_grid₀).c ≥ (0 : ℤ),
+                  from int.div_nonneg (int.coe_zero_le _) this,
+                rw ← int.coe_nat_eq_coe_nat_iff, simp,
+                repeat { rw int.nat_abs_of_nonneg; try { assumption } },
+                exact int.mod_add_div _ _
+              end,
+              simpa [this]
+            end,
           rw nth_generate_f',
-          simp [
-            abs_data, relpoint_of_gpoint, prod_of_rel_point, tl,
-            expand_gtr, bl, function.uncurry, relative_grid.rows,
-            relative_grid.cols, relative_grid.data
-          ],
-          unfold_coes,
-          rw vector.nth_eq_nth_le,
-          rw list.nth_le_nth,
-          apply congr_arg, congr' 1, simp,
+          
+            simp [abs_data_eq_nth_a', vector.nth_eq_nth_le, list.nth_le_nth this],
+          congr' 2,
           rw ← int.coe_nat_eq_coe_nat_iff,
           repeat { rw int.coe_nat_add },
           repeat { rw int.of_nat_eq_coe },
@@ -166,18 +171,6 @@ begin
           rw mul_comm,
           rw ← eq₁, rw ← eq₂, exact h₁,
           exact H₁,
-          rw ← int.coe_nat_lt_coe_nat_iff,
-          rw int.coe_nat_add,
-          rw int.coe_nat_mul,
-          repeat { rw int.nat_abs_of_nonneg },
-          rw int.coe_nat_mod,
-          rw int.coe_nat_div,
-          rw int.mod_add_div,
-          rw generate_eq_data at h₂,
-          rw int.coe_nat_lt_coe_nat_iff,
-          exact h₂,
-          apply int.coe_zero_le,
-          apply int.coe_zero_le,
           rw ← int.coe_nat_lt_coe_nat_iff,
           rw int.coe_nat_add,
           rw int.coe_nat_mul,
