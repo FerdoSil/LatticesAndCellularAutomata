@@ -17,12 +17,7 @@ lemma mul_gt_of_gt_gt {m n : ℕ} (h₁ : m > 0) (h₂ : n > 0) : m * n > 0 :=
 lemma lt_add_coe_of_gt_zero {x : ℤ} {y : ℕ} (h : y > 0) : x < x + ↑y :=
   lt_add_of_pos_right _ (by simpa [gt_from_lt, h])
 
-lemma lt_of_add_lt {m n k : ℕ} (h : m + n < k) : m < k :=
-begin
-  induction n with n ih,
-    {exact h},
-    {exact ih (by omega)}
-end
+lemma lt_of_add_lt {m n k : ℕ} (h : m + n < k) : m < k := by omega
 
 lemma nat_le_dest : ∀ {n m : ℕ}, n < m → ∃ k, nat.succ n + k = m
   | n ._ (less_than_or_equal.refl ._)  := ⟨0, rfl⟩
@@ -49,10 +44,7 @@ begin
     {
       cases l₂ with y ys,
         {injection h},
-        {
-          simp only [zip_with, length],
-          rw ih, injection h
-        }
+        {simp only [zip_with, length], finish}
     }
 end
 
@@ -64,10 +56,7 @@ begin
     {
       cases l₂ with y ys,
         {injection h},
-        {
-          simp only [zip_with, length],
-          rw ih, injection h
-        }
+        {simp only [zip_with, length], finish}
     }
 end
 
@@ -90,8 +79,7 @@ begin
     {
       unfold join,
       have h₁ : x = [], from h _ (by left; refl),
-      simp [h₁, nil_append],
-      exact ih (λx₁, λh₂, h _ (mem_cons_of_mem _ h₂))
+      simp [h₁, nil_append, (ih (λx₁, λh₂, h _ (mem_cons_of_mem _ h₂)))]
     }
 end
 
@@ -121,10 +109,9 @@ lemma neg_lt_add_one_of_ge_zero (n : ℕ) (a : ℤ) (h : a ≥ 0) : -↑n < a + 
 lemma sub_one_mul_gt_of_gt_mul_gt {a b : ℕ} (h : a > 1) (h₁ : a * b > 0) :
   (a - 1) * b > 0 :=
 begin
-  apply mul_pos _ (gt_and_gt_of_mul_gt h₁).2; simp [gt_from_lt] at *,  
-  rw [← int.coe_nat_lt_coe_nat_iff, int.coe_nat_sub, lt_sub],
-    {simp, norm_cast, exact h},
-  exact le_of_lt h
+  apply mul_pos _ (gt_and_gt_of_mul_gt h₁).2; simp [gt_from_lt] at *,
+  rw [← int.coe_nat_lt_coe_nat_iff, int.coe_nat_sub (le_of_lt h), lt_sub],
+  simp, norm_cast, exact h
 end
 
 section bounded
@@ -253,17 +240,7 @@ lemma grid_bounded_iff {p₁ p₂ : point} : p₁↗p₂ ↔ (p₁.x < p₂.x �
 
 lemma length_zip_left {α β : Type*} {l₁ : list α} {l₂ : list β}
   (h : length l₁ = length l₂) : length (zip l₁ l₂) = length l₁ :=
-begin
-  induction l₁ with l₃h l₃t ih generalizing l₂; cases l₂,
-    {refl},
-    {cases h},
-    {cases h},
-    {
-      unfold zip zip_with,
-      dsimp, repeat {rw add_one}, congr,
-      apply ih, dsimp at h, injection h
-    }
-end
+  by induction l₁ with l₃h l₃t ih generalizing l₂; cases l₂; finish
 
 lemma not_grid_bounded_iff {p₁ p₂ : point} :
   ¬p₁↗p₂ ↔ (p₂.x ≤ p₁.x ∨ p₁.y ≤ p₂.y) :=
@@ -290,26 +267,11 @@ begin
   }
 end
 
-lemma abs_nat_lt : ∀n m : ℤ, (0 ≤ n) → n < m → nat_abs n < nat_abs m
-  | (of_nat n₁) (of_nat n₂) zlen nltm :=
+lemma abs_nat_lt {n m : ℤ} (zlen : 0 ≤ n) (nltm : n < m) : nat_abs n < nat_abs m :=
   begin
-    dsimp,
-    revert n₁, induction n₂ with _ ih; intros; cases n₁,
-    {cases nltm},
-    {cases nltm},
-    {apply zero_lt_succ},
-    {
-      apply succ_lt_succ,
-      apply ih,
-        {
-          cases n₁, exact le_refl _,
-          rw [of_nat_succ, add_comm], simp
-        },
-        {
-          repeat {rw of_nat_succ at nltm},
-          exact lt_of_add_lt_add_right nltm
-        }
-    }
+    rw ← int.coe_nat_lt,
+    have : 0 ≤ m, by linarith,
+    repeat { rw nat_abs_of_nonneg }; assumption
   end
 
 def range_weaken_lower_any {a b c : ℤ} (h : c ≤ a) : bounded a b → bounded c b
@@ -391,21 +353,15 @@ begin
           subst h₁,
           unfold1 range_pure at h,
           by_cases h₂ : a < b; simp [h₂] at h,
-            {
-              cases h with hl hr, subst hl,
-              split, refl, exact h₂
-            },
-            {cases h}
+            {exact ⟨h.1 ▸ le_refl _, h.1 ▸ h₂⟩},
+            {contradiction}
         },
         {
           unfold1 range_pure at h,
           by_cases eq : a < b; simp [eq] at h,
             {
-              cases h with hl hr,
-              have ih₁ := @ih (a + 1) b hr h₁,
-              cases ih₁ with lb ub,
-              split, {exact int.le_of_lt (lt_of_add_one_le lb)},
-                     {exact ub}
+              have ih₁ := @ih (a + 1) b h.2 h₁,
+              exact ⟨int.le_of_lt (lt_of_add_one_le ih₁.1), ih₁.2⟩
             },
             {contradiction}
         }
@@ -419,7 +375,7 @@ begin
       unfold1 range_pure at h,
       by_cases h₁ : a < b; simp [h₁] at h,
         {contradiction},
-        {rw not_lt at h₁, assumption}
+        {omega}
     },
     {
       unfold1 range_pure,
@@ -444,28 +400,21 @@ begin
       simp only [is_bounded] at h, rw le_iff_lt_or_eq at h,
       cases h.left with h₁ h₁,
         {
-          right, apply @ih (a + 1),
-            {
-              simp only [is_bounded],
-              exact and.intro (add_one_le_of_lt h₁) (h.right)
-            },
-            {exact @range_pure_cons _ _ y _ h₃}
+          exact mem_cons_of_mem _
+            (@ih (a + 1) ⟨add_one_le_of_lt h₁, h.2⟩ (@range_pure_cons _ _ y _ h₃))
         },
         {
           subst h₁,
-          have h₄ : a = y,
-            {
-              unfold1 range_pure at h₃,
-              rw if_pos h.2 at h₃,
-              injection h₃
-            }, 
+          have h₄ : a = y, {
+            unfold1 range_pure at h₃, rw if_pos h.2 at h₃, injection h₃
+          }, 
           left, cc
         }
     }
 end
 
 lemma range_pure_singleton {x} : range_pure x (x + 1) = [x] :=
-  by  rw [range_pure_next (lt_add_one _), range_pure_empty_iff.2 (le_refl _)]
+  by rw [range_pure_next (lt_add_one _), range_pure_empty_iff.2 (le_refl _)]
 
 lemma in_range_iff {a b} {x} : x ∈ range_pure a b ↔ is_bounded a b x :=
   ⟨range_pure_bounded, in_range_pure_of_bounded⟩
@@ -474,18 +423,9 @@ def range_pure_m (a b : ℤ) : list ℤ := map z_of_bounded (range a b)
 
 lemma range_empty_iff {a b : ℤ} : range a b = [] ↔ (b ≤ a) :=
 begin
-  split; intros h,
-  {
-    unfold1 range at h,
-    by_cases h₁ : a < b; simp [h₁] at h,
-      {contradiction},
-      {finish},
-  },
-  {
-    unfold1 range,
-    by_cases h₁ : a < b; simp [h₁],
-    omega
-  }
+  split; intros h; unfold1 range at *,
+  {by_cases h₁ : a < b; simp [h₁] at h; finish},
+  {by_cases h₁ : a < b; simp [h₁], omega}
 end
 
 lemma range_len_zero_iff (a b : ℤ) : length (range a b) = 0 ↔ b ≤ a :=
@@ -493,19 +433,13 @@ begin
   split; intros h,
   {
     unfold1 range at h,
-    by_cases h₁ : a < b; simp [h₁] at h,
-      {contradiction},
-      {finish},
+    by_cases h₁ : a < b; simp [h₁] at h; finish
   },
   {simp [range_empty_iff.2 h]}
 end
 
 lemma range_length_same_zero (a : ℤ) : length (range a a) = 0 :=
-begin
-  unfold1 range,
-  have h : ¬a < a, from lt_irrefl _,
-  simp [h]
-end
+  by unfold1 range; simp [(lt_irrefl _)]
 
 lemma range_length_one (a : ℤ) : length (range a (a + 1)) = 1 :=
 begin
@@ -515,11 +449,7 @@ begin
 end
 
 lemma range_pure_length_same (a : ℤ) : length (range_pure a a) = 0 :=
-begin
-  unfold1 range_pure,
-  have h : ¬a < a, from lt_irrefl _,
-  simp [h]
-end
+  by unfold1 range_pure; simp [(lt_irrefl _)]
 
 lemma range_pure_length_one (a : ℤ) : length (range_pure a (a + 1)) = 1 :=
 begin
@@ -534,8 +464,7 @@ begin
   generalize h₁ : nat_abs (b - a) = n,
   induction n with n ih generalizing a b,
     {
-      rw nat_abs_zero_iff at h₁,
-      rw h₁,
+      rw nat_abs_zero_iff at h₁, rw h₁,
       exact range_length_same_zero _
     },
     {
@@ -567,12 +496,10 @@ begin
       rw le_iff_eq_or_lt at h₃,
       cases h₃,
         {
-          have h₇ : ¬a + 1 < b, rw ← h₃, intros contra,
-            {exact absurd contra (lt_irrefl _)},
-            {
-              simp [h₇] at ih,
-              rw ← ih, rw ← h₃, rw range_length_one
-            }
+          have h₇ : ¬a + 1 < b,
+            by rw ← h₃; intros contra; exact absurd contra (lt_irrefl _),  
+          simp [h₇] at ih,
+          rw [← ih, ← h₃, range_length_one]
         },
         {
           simp [h₃] at ih, unfold1 range,
@@ -620,9 +547,10 @@ begin
       rw le_iff_eq_or_lt at h₃,
       cases h₃,
         {
-          have h₇ : ¬a + 1 < b, rw ← h₃, intros contra,
-            {exact absurd contra (lt_irrefl _)},
-            {simp [h₇] at ih, rw [← ih, ← h₃, range_pure_length_one]}
+          have h₇ : ¬a + 1 < b,
+            by rw ← h₃; intros contra; exact absurd contra (lt_irrefl _),
+          simp [h₇] at ih,
+          rw [← ih, ← h₃, range_pure_length_one]
         },
         {
           simp [h₃] at ih, unfold1 range_pure,
@@ -639,8 +567,7 @@ def empty_list {α : Type} (l : list α) := [] = l
 lemma not_empty_of_len {α : Type} {l : list α}
   (h : length l > 0) : ¬empty_list l :=
 begin
-  simp [empty_list],
-  cases l, {cases h}, {trivial}
+  simp [empty_list], cases l, {cases h}, {trivial}
 end
 
 lemma empty_list_eq_ex {α : Type} {l : list α} (h : ¬empty_list l) :
@@ -717,25 +644,18 @@ lemma le_min_elem_of_all {α : Type*} [decidable_linear_order α]
 assume h₁,
 begin
   induction l with y ys ih,
-    {
-      unfold empty_list at h, contradiction
-    },
+    {unfold empty_list at h, contradiction},
     {
       unfold min_element foldr1,
       cases ys with ysh yst,
         {simp [h₁]},
         {
-          have ih := ih _ _,
-            {
-              unfold min_element foldr1 at ih,
-              rw foldr_swap min ⟨min_comm⟩ ⟨min_assoc⟩,
-              dsimp at *, rw le_min_iff,
-              split,
-                {simp [h₁]},
-                {assumption},
-            },
-            {unfold empty_list, intros ok, cases ok},
-            {intros, apply h₁, right, simp [(∈)] at a, exact a}
+          have ih := ih (by unfold empty_list; intros ok; cases ok)
+                        (by intros; apply h₁; right; simp [(∈)] at a; exact a),  
+          unfold min_element foldr1 at ih,
+          rw foldr_swap min ⟨min_comm⟩ ⟨min_assoc⟩,
+          dsimp at *, rw le_min_iff,
+          exact ⟨by simp [h₁], by assumption⟩
         }
     }
 end
@@ -745,22 +665,19 @@ lemma max_le_elem_of_all {α : Type*} [decidable_linear_order α]
   (∀x, x ∈ l → x ≤ b) → max_element l h ≤ b :=
 assume h₁,
 begin
-induction l with y ys ih,
+  induction l with y ys ih,
     {unfold empty_list at h, contradiction},
     {
       unfold max_element foldr1,
       cases ys with ysh yst,
-        {dsimp, apply h₁, left, refl},
+        {simp [h₁]},
         {
-          have ih := ih _ _,
+          have ih := ih (by unfold empty_list; intros ok; cases ok)
+                        (by intros; apply h₁; right; simp [(∈)] at a; exact a),
           unfold max_element foldr1 at ih,
           rw foldr_swap max ⟨max_comm⟩ ⟨max_assoc⟩,
           dsimp at *, rw max_le_iff,
-          split,
-            {simp [h₁]},
-            {exact ih_1},
-          unfold empty_list, intros ok, cases ok,
-          intros, apply h₁, right, simp [(∈)] at a, exact a
+          exact ⟨by simp [h₁], by assumption⟩
         }
     }
 end
@@ -788,14 +705,13 @@ begin
         {
           have h₁ : ¬empty_list (x :: ys),
             by unfold empty_list; intros; contradiction,
-          have ih := xs_ih h₁,
-          exact min_le_max ih
+          exact min_le_max (xs_ih h₁)
         }
     }
 end
 
 lemma max_elem_sub_min_elem_nonneg 
-  (l : list ℤ) (h : ¬empty_list l) : max_element l h - min_element l h ≥ 0 :=
+  {l : list ℤ} (h : ¬empty_list l) : max_element l h - min_element l h ≥ 0 :=
 begin
   unfold min_element max_element, repeat { rw foldr1_unempty_eq_foldr },
   rw head1_unempty_eq_head,
@@ -813,19 +729,7 @@ begin
               rw foldr_swap min ⟨min_comm⟩ ⟨min_assoc⟩,
               simp, rw ← sub_eq_add_neg, unfold min max,
               by_cases h₂ : x ≤ foldr max y ys;
-                by_cases h₃ : x ≤ foldr min y ys; simp [h₂, h₃],
-                  {
-                    simp [ge_from_le],
-                    rw [← sub_eq_add_neg, le_sub_iff_add_le, zero_add],
-                    exact h₂
-                  },
-                  {exact ih},
-                  {
-                    simp [ge_from_le],
-                    rw [← sub_eq_add_neg, le_sub_iff_add_le, zero_add],
-                    rw not_le at h₃,
-                    exact int.le_of_lt h₃
-                  }
+                by_cases h₃ : x ≤ foldr min y ys; simp [h₂, h₃]; linarith,
             }
         }
     }
@@ -833,15 +737,11 @@ end
 
 lemma map_empty_iff_l_empty {α β : Type} {f : α → β} {l : list α} :
   empty_list (map f l) ↔ empty_list l :=
-begin
-  split; intros h; cases l; try {finish <|> simp [empty_list]}
-end
+  by split; intros h; cases l; try {finish <|> simp [empty_list]}
 
 lemma unzip_one {α β : Type} (l : α) (r : β) (xs : list (α × β)) :
   unzip ((l, r) :: xs) = ((l :: (unzip xs).fst), r :: (unzip xs).snd) :=
-begin
-  simp [unzip], cases (unzip xs), simp [unzip]
-end
+  by simp [unzip]; cases (unzip xs); simp [unzip]
 
 lemma unzip_fst_empty_iff_l_empty {α β : Type} (l : list (α × β)) :
   empty_list (unzip l).fst ↔ empty_list l :=
@@ -866,28 +766,7 @@ lemma pair_in_zip_l {α β} {a b} {l₁ : list α} {l₂ : list β}
 begin
   induction l₁ with x xs ih generalizing l₂,
     {simp [zip, zip_with] at h, contradiction},
-    {
-      cases l₂ with y ys,
-        {
-          simp [zip, zip_with] at h,
-          contradiction
-        },
-        {
-          unfold1 zip at h,
-          unfold1 zip_with at h,
-          rw mem_cons_iff at h,
-          cases h,
-            {
-              injection h with hl hr,
-              subst hl, subst hr,
-              left, refl
-            },
-            {
-              rw mem_cons_eq,
-              right, apply ih h
-            }
-        }
-    }
+    {cases l₂ with y ys; finish}
 end
 
 lemma pair_in_zip_r {α β} {a b} {l₁ : list α} {l₂ : list β}
@@ -895,29 +774,7 @@ lemma pair_in_zip_r {α β} {a b} {l₁ : list α} {l₂ : list β}
 begin
   induction l₁ with x xs ih generalizing l₂,
     {simp [zip, zip_with] at h, contradiction},
-    {
-      cases l₂ with y ys,
-        {
-          simp [zip, zip_with] at h,
-          contradiction
-        },
-        {
-          unfold1 zip at h,
-          unfold1 zip_with at h,
-          rw mem_cons_iff at h,
-          cases h,
-            {
-              injection h with hl hr,
-              subst hl, subst hr,
-              left, refl
-            },
-            {
-              rw mem_cons_eq,
-              right, apply ih, 
-              unfold zip, exact h
-            }
-        }
-    }
+    {cases l₂ with y ys; finish}
 end
 
 def decidable_uncurry {α β : Type*} {f : α → β → Prop} {x : α × β}
@@ -1001,7 +858,7 @@ begin
         {rw list_iso_nil_r at h, cases h},
         {
           simp [list_iso] at h h₁,
-          split, {cc}, {exact ih h.2 h₁.2}
+          exact ⟨by cc, ih h.2 h₁.2⟩
         }
     }
 end
@@ -1018,7 +875,7 @@ lemma list_iso_iff {α : Type*} [decidable_eq α] {l₁ l₂ : list α} :
   list_iso l₁ l₂ ↔ l₁ = l₂ :=
 begin
   split; intros h,
-    {
+    { 
       induction l₁ with x xs ih generalizing l₂,
         {
           cases l₂ with y ys,
@@ -1070,14 +927,6 @@ begin
     }
 end
 
-lemma iterate_id {α : Type*} {x : α} {n : ℕ} :
-  iterate id x n = x :=
-begin
-  induction n with n ih,
-    {simp [iterate_zero]},
-    {simp [iterate_one, ih]}
-end
-
 lemma iterate_id_of_x {α : Type*} {f : α → α} {x : α} {n : ℕ}
   (h : f x = x) : iterate f x n = x :=
 begin
@@ -1098,7 +947,7 @@ begin
   have h₁ := nat.mod_add_div m n,
   generalize s₁ : m % n = r,
   generalize s₂ : m / n = q,
-  rw s₁ at h₁, rw s₂ at h₁,
+  rw [s₁, s₂] at h₁,
   have h₂ : 0 ≤ r, from nat.zero_le _,
   have h₄ : n = 0 ∨ n ≠ 0, from classical.em _,
   cases h₄,
@@ -1111,7 +960,7 @@ begin
             {contradiction},
             {clear h₁ h₂ h₄ h s₁ s₂, omega}
         },
-      rw ← h₁, simp,
+      simp [h₁.symm],
       by_cases h₆ : r + 1 < n,
         {
           rw [← add_assoc, add_comm, nat.add_mul_mod_self_left],
@@ -1141,14 +990,7 @@ begin
   have : m = m % n + n * (m / n), from (nat.mod_add_div m n).symm,
   generalize h₁ : iterate f x (m % n) = rhs,
   rw [this, add_comm, ← iterate_iterate_add, ← iterate_iterate_mul],
-  subst h₁, congr, rw iterate_id_of_x, exact h
-end
-
-lemma mod_self {n : ℕ} : n % n = 0 :=
-begin
-  cases n with n,
-    {refl},
-    {rw [nat.mod_def, if_pos, nat.sub_self, nat.zero_mod], split; omega}
+  subst h₁, congr, rwa iterate_id_of_x
 end
 
 lemma repeat_bounded {α : Type*} {a : α} {b} :
@@ -1168,11 +1010,7 @@ lemma update_nth_pres_len {α : Type} (l : list α) {n} {x} :
 begin
   induction l with y ys ih generalizing n,
     {refl},
-    {
-      cases n with n; unfold update_nth,
-        {refl},
-        {simp [ih]}
-    }
+    {cases n with n; unfold update_nth; simp [ih]}
 end
 
 lemma zip_fst {α β : Type} {x : α × β}
@@ -1234,10 +1072,7 @@ begin
         by_cases h₂ : P (y, y₂),
         {
           rw [filter_cons_of_pos, unzip1_fst, mem_cons_eq] at h,
-          cases h,
-            {left, assumption},
-            {right, apply ih h},
-            {exact h₂}
+          cases h; try { finish }, assumption
         },
         {
           rw filter_cons_of_neg _ h₂ at h,
@@ -1354,10 +1189,8 @@ begin
     {refl},
     {
       dsimp,
-      have : f y = g y, from h _ (mem_cons_self _ _),
-      rw this, apply congr_arg, apply ih,
-      intros z h₁, apply h,
-      right, exact h₁
+      have : f y = g y, from h _ (mem_cons_self _ _), rw this,
+      exact congr_arg _ (ih (λ_ h₁, h _ (mem_cons_of_mem _ h₁)))
     }
 end
 
@@ -1383,22 +1216,14 @@ begin
         {constructor},
         {
           simp [attach, empty_list] at h,
-          cases h
+          contradiction
         }
     }
 end
 
-lemma not_map_empty_of_not_empty {α β : Type} {l : list α} {f : α → β}:
-  ¬empty_list l → ¬empty_list (map f l) :=
-assume h,
-begin
-  induction l with x xs ih,
-    {simp [empty_list] at h, contradiction},
-    {
-      dsimp, intros ok, simp [empty_list] at ok,
-      contradiction
-    }
-end
+lemma not_map_empty_of_not_empty {α β : Type} {l : list α} {f : α → β}
+  (h : ¬empty_list l) : ¬empty_list (map f l) :=
+  assume contra, by simp [empty_list] at h; cases l with x xs; contradiction
 
 lemma not_join_empty_of_not_empty {α : Type} {l : list (list α)} :
   empty_list (join l) → (empty_list l ∨ ∀xs ∈ l, empty_list xs) :=
@@ -1407,23 +1232,17 @@ begin
   induction l with y ys ih,
     {left, constructor},
     {
-      have h₁ : y = [],
-        {
-          simp [empty_list] at h,
-          cases y, 
-            {refl},
-            {exact h.1}
-        },
+      have h₁ : y = [], by simp [empty_list] at h; exact h.1,
       rw h₁, right, intros h₂ h₃, rw mem_cons_eq at h₃,
       cases h₃,
-        {rw h₃, constructor,},
+        {rw h₃, constructor},
         {
           rw h₁ at h, dsimp at h,
           have ih := ih h,
-          cases ih with ih ih,
           simp [empty_list] at ih,
-          rw ← ih at h₃, cases h₃,
-          exact ih _ h₃
+          cases ih with ih ih,
+            {rw ← ih at h₃, cases h₃},
+            {exact ih _ h₃}
         }
     }
 end
@@ -1435,40 +1254,22 @@ assume contra,
 lemma abs_minus_plus {a b : ℤ}
   (h : a > b) : nat_abs (a - b) - 1 = nat_abs (a - (b + 1)) :=
 begin
-  rw [← int.coe_nat_eq_coe_nat_iff, nat_abs_of_nonneg],
-    {
-      rw [int.coe_nat_sub, nat_abs_of_nonneg],
-        {simp},
-        {omega},
-        {rw [← int.coe_nat_le_coe_nat_iff, nat_abs_of_nonneg]; omega}
-    },
-    {simp [ge_from_le], omega}
+  have : a - (b + 1) ≥ 0, by simp; omega,
+  rw [← int.coe_nat_eq_coe_nat_iff, nat_abs_of_nonneg this],
+  clear this,
+  have h₁ : a - b ≥ 0, by omega,
+  have h₂ : 1 ≤ nat_abs (a - b),
+    by rw [← int.coe_nat_le_coe_nat_iff, nat_abs_of_nonneg]; omega,
+  rw [int.coe_nat_sub h₂, nat_abs_of_nonneg h₁],
+  simp
 end
 
 lemma count_eq_iff {α : Type} [decidable_eq α] {l₁ l₂ : list α}
   (h : l₁ = l₂) {x} : list.count x l₁ = list.count x l₂ :=
-begin
-  cases l₁ with y ys; cases l₂ with z za,
-    {refl},
-    {cases h},
-    {cases h},
-    {injection h with h₁ h₂, rw [h₁, h₂]}
-end
+  by cases l₁ with y ys; cases l₂ with z za; finish
 
 lemma list_empty_iff_len {α : Type} {l : list α} : l = [] ↔ length l = 0 :=
-begin
-  split; intros h,
-    {rw h, refl},
-    {
-      cases l with x xs,
-        {refl},
-        {
-          dsimp at h,
-          let contra := add_one_ne_zero (length xs),
-          contradiction
-        }
-    }
-end
+  by split; intros h; cases l with x xs; finish  
 
 lemma map_eq_repeat {ps} {r} :
   map point.y ps = repeat r (length ps) →
@@ -1483,11 +1284,8 @@ begin
     },
     {
       cases ps with psh pst, cases h₂,
-      have h₃ : length pst = n,
-        {dsimp at h, injection h},
-      dsimp at h₁, injection h₁ with h₁l h₁r,
-      rw mem_cons_iff at h₂,
-      cases h₂, {cc}, {exact ih h₃ h₁r h₂}
+      have h₃ : length pst = n, by dsimp at h; injection h,
+      finish
     }
 end
 

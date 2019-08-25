@@ -99,58 +99,54 @@ theorem transpose_transpose_id (m₁ : matrix m n α) :
 begin
   rcases m₁ with ⟨⟨g, ⟨_, _⟩⟩, h₁, h₂⟩, subst h₁, subst h₂,
   unfold transpose, congr' 1,
-  ext _; try { simp };
+  ext _; try { simp }, rw gen_aof_eq_gen,
+  apply list.ext_le _ _,
     {
-      rw gen_aof_eq_gen,
-      apply list.ext_le,
+      repeat { rw length_generate_eq_size },
+      simp [size, relative_grid.rows, relative_grid.cols]
+    },
+    {
+      intros n h₁ h₂, rw nth_le_generate_f,
+      simp [abs_data_eq_nth_a', tl, bl, vector.nth_eq_nth_le, vector.to_list],
+      rw [← option.some_inj, ← list.nth_le_nth, nth_agrid_of_fgrid],
+      have : |↑n % ↑g.c| + g.c * |↑n / ↑g.c| < list.length g.data.val,
+        by rw [mul_comm, mod_add_div_coe]; rw generate_eq_data at h₂; exact h₂,
+      simp [length_generate_eq_size, size] at h₂,
+      have rpos : g.r > 0, from (gt_and_gt_of_mul_gt g.h).1,
+      have cpos : g.c > 0, from (gt_and_gt_of_mul_gt g.h).2,
+      have nltcr : n < g.r * g.c, by simp [rows, cols, *] at h₂; assumption,
+      have h₃ : ↑(n / g.c) < ↑g.r,
+        by rwa [int.coe_nat_lt_coe_nat_iff, nat.div_lt_iff_lt_mul _ _ cpos],
+      rw nth_generate_f,
+      simp [abs_data_eq_nth_a', vector.nth_eq_nth_le, list.nth_le_nth this, vector.to_list],
+      rw [← with_bot.some_eq_coe], simp [generate_eq_data],
+      congr,
         {
-          repeat { rw length_generate_eq_size },
-          simp [size, relative_grid.rows, relative_grid.cols]
+          have rnezero : g.r ≠ 0, by intros contra; rw contra at rpos; linarith,
+          rw ← int.coe_nat_eq_coe_nat_iff, simp,
+          repeat { rw int.nat_abs_of_nonneg; try { apply int.coe_zero_le } },
+          rw @int.add_mul_div_right _ _ g.r (by simpa),
+          norm_cast, rw nat.div_div_eq_div_mul, rw mul_comm g.c g.r,
+          simp[@nat.div_eq_of_lt n (g.r * g.c) nltcr],
+          norm_cast,
+          have h₄ : (0 : ℤ) ≤ ↑(n / g.c), by simp,
+          rw @int.mod_eq_of_lt ↑(n / g.c) ↑g.r h₄ h₃, rw mul_comm,
+          apply int.mod_add_div
         },
         {
-          intros n h₁ h₂, rw nth_le_generate_f,
-          simp [abs_data_eq_nth_a', tl, bl, vector.nth_eq_nth_le, vector.to_list],
-          rw [← option.some_inj, ← list.nth_le_nth, nth_agrid_of_fgrid],
-          have : |↑n % ↑g.c| + g.c * |↑n / ↑g.c| < list.length g.data.val,
-            by rw [mul_comm, mod_add_div_coe]; rw generate_eq_data at h₂; exact h₂,
-          simp [length_generate_eq_size, size] at h₂,
-          have rpos : g.r > 0, from (gt_and_gt_of_mul_gt g.h).1,
-          have cpos : g.c > 0, from (gt_and_gt_of_mul_gt g.h).2,
-          have nltcr : n < g.r * g.c, by simp [rows, cols, *] at h₂; assumption,
-          have h₃ : ↑(n / g.c) < ↑g.r,
-            by rwa [int.coe_nat_lt_coe_nat_iff, nat.div_lt_iff_lt_mul _ _ cpos],
-          rw nth_generate_f,
-          simp [abs_data_eq_nth_a', vector.nth_eq_nth_le, list.nth_le_nth this, vector.to_list],
-          rw [← with_bot.some_eq_coe],
-          simp [generate_eq_data],
-          congr' 2,
-            {
-              have rnezero : g.r ≠ 0, by intros contra; rw contra at rpos; linarith,
-              rw ← int.coe_nat_eq_coe_nat_iff, simp,
-              repeat { rw int.nat_abs_of_nonneg; try { apply int.coe_zero_le } },
-              rw @int.add_mul_div_right _ _ g.r (by simpa),
-              norm_cast, rw nat.div_div_eq_div_mul, rw mul_comm g.c g.r,
-              simp[@nat.div_eq_of_lt n (g.r * g.c) nltcr],
-              norm_cast,
-              have h₄ : (0 : ℤ) ≤ ↑(n / g.c), by simp,
-              rw @int.mod_eq_of_lt ↑(n / g.c) ↑g.r h₄ h₃, rw mul_comm,
-              apply int.mod_add_div
-            },
-            {
-              rw length_generate_eq_size, simp [size, cols, rows],
-              rw [add_comm],
-              have h₄ : |↑n / ↑g.c| < g.r, by norm_cast at *; exact h₃,
-              have h₅ : |↑n % ↑g.c| < g.c,
-                begin
-                  rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg],
-                  apply @int.mod_lt_of_pos ↑n ↑g.c (by norm_cast; exact cpos),
-                  have cnezero : g.c ≠ 0, by intros contra; rw contra at cpos; linarith,
-                  exact int.mod_nonneg _ (by simp [cnezero])
-                end,
-              exact linearize_array h₄ h₅
-            },
+          rw length_generate_eq_size, simp [size, cols, rows],
+          rw [add_comm],
+          have h₄ : |↑n / ↑g.c| < g.r, by norm_cast at *; exact h₃,
+          have h₅ : |↑n % ↑g.c| < g.c,
+            begin
+              rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg],
+              apply @int.mod_lt_of_pos ↑n ↑g.c (by norm_cast; exact cpos),
+              have cnezero : g.c ≠ 0, by intros contra; rw contra at cpos; linarith,
+              exact int.mod_nonneg _ (by simp [cnezero])
+            end,
+          exact linearize_array h₄ h₅
         }
-    }
+    }   
 end
 
 end operations
