@@ -83,9 +83,7 @@ private lemma col_even {n} (h : n % 2 = 0) {a} {g}
 begin
   unfold step_n,
   rw @periode_cycle _ _ _ _ 2,
-    {
-      rw [h, iterate_zero]
-    },
+    {rw [h, iterate_zero]},
     {
       rw h₂, subst h₃,
       rw caut_eq_iff; try { by simp },
@@ -103,9 +101,9 @@ begin
   unfold step_n,
   rw @periode_cycle _ _ _ _ 2,
     {
-      rw h, rw iterate_one,
-      rw iterate_zero, rw h₃,
-      rw caut_eq_iff; try { by simp [col_gol, row_gol, mk_gol] },
+      rw [h, iterate_one,
+      iterate_zero, h₃,
+      caut_eq_iff]; try { by simp [col_gol, row_gol, mk_gol] },
       refl
     },
     {

@@ -267,11 +267,29 @@ begin
   }
 end
 
-lemma abs_nat_lt {n m : ℤ} (zlen : 0 ≤ n) (nltm : n < m) : nat_abs n < nat_abs m :=
+private lemma abs_nat_lt : ∀{n m : ℤ}, (0 ≤ n) → n < m → nat_abs n < nat_abs m
+  | (of_nat n₁) (of_nat n₂) zlen nltm :=
   begin
-    rw ← int.coe_nat_lt,
-    have : 0 ≤ m, by linarith,
-    repeat { rw nat_abs_of_nonneg }; assumption
+    dsimp,
+    revert n₁, induction n₂ with _ ih; intros; cases n₁,
+    {cases nltm},
+    {cases nltm},
+    {apply zero_lt_succ},
+    {
+      apply succ_lt_succ (ih _ _ _),
+      {
+        cases n₁, exact le_refl _,
+        rw [of_nat_succ, add_comm], simp
+      },
+      {
+        repeat {rw of_nat_succ at nltm},
+        exact lt_of_add_lt_add_right nltm
+      }
+    }
+    -- This proof breaks beta reduction further down the line for some reason.
+    -- rw ← int.coe_nat_lt_coe_nat_iff,
+    -- have : of_nat n₂ ≥ (0 : ℤ), linarith,
+    -- repeat { rw int.nat_abs_of_nonneg }; assumption
   end
 
 def range_weaken_lower_any {a b c : ℤ} (h : c ≤ a) : bounded a b → bounded c b
