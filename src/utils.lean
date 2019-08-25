@@ -1,5 +1,4 @@
 import data.int.basic data.list data.vector tactic.omega tactic.linarith
-       tactic.sanity_check
 
 namespace utils 
 
@@ -1578,6 +1577,15 @@ begin
     try {unfold length at h, rw ← succ_eq_add_one at h, cases h},
     {refl},
     {simp [zip_with], apply ih, injection h}
+end
+
+lemma mod_add_div_coe {i c : ℕ} :
+  int.nat_abs(↑i % ↑c) + int.nat_abs(↑i / ↑c) * c = i :=
+begin
+  rw [← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add, int.coe_nat_mul],
+  have : ↑i % ↑c ≥ (0 : ℤ), by simp [ge_from_le]; linarith,
+  repeat { rw nat_abs_of_nonneg; try { assumption } }, 
+  rw [mul_comm, int.mod_add_div]
 end
 
 namespace vector

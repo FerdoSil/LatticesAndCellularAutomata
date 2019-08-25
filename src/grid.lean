@@ -1227,66 +1227,51 @@ begin
   linarith
 end
 
-lemma nth_generate_a {α : Type} {g : agrid₀ α} {n} (H) :
+lemma some_nth_le_generate_a {α : Type} {g : agrid₀ α} {n} (H) :
   some (nth_le (℘ g) n H) =
   nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c ) :=
 begin
   rcases g with ⟨⟨r, c, h, ⟨d, hd⟩⟩, o⟩,
   rw [nth_le_nth, nth_generate],
   simp [abs_data_eq_nth_a', expand_gtr, bl, tl, rows, cols, vector.nth, hd],
-  rw ← int.coe_nat_lt_coe_nat_iff, simp,
-  have : ↑c ≠ (0 : ℤ),
-    assume contra, by simp at contra; rw contra at h; linarith,
-  rw nat_abs_of_nonneg (mod_nonneg _ this), norm_cast,
-  rw [int.coe_nat_mul, int.coe_nat_div, mul_comm, mod_add_div],
+  rw mod_add_div_coe,
   simp [length_generate, rows, cols] at H,
   simp [H], simpa [hd]
 end
 
-lemma nth_generate_a' {α : Type} {g : agrid₀ α} {n} (H : n < length ℘ g):
+lemma nth_generate_a {α : Type} {g : agrid₀ α} {n} (H : n < length ℘ g):
   nth (℘ g) n =
   nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c) :=
-  by simp [nth_le_nth, nth_generate_a, H]
+  by simp [nth_le_nth, some_nth_le_generate_a, H]
+
+private lemma goy_add_n_div_c_sub_r_lt_goy {α : Type} {g : fgrid α} {n : ℕ}
+  (h : n < length ℘ g) : (g.o).y + (↑n / ↑(g.c) - ↑(g.r)) < (g.o).y :=
+  begin
+    simp [-sub_eq_add_neg], norm_cast,
+    rw [length_generate, nat.mul_comm] at h,
+    exact nat.div_lt_of_lt_mul h
+  end
 
 lemma some_nth_le_generate_f {α : Type} {g : fgrid α} {n} (H) :
   some (nth_le (℘ g) n H) =
   g.data
-    ⟨
-      g.o.y + (↑n / ↑g.c - ↑g.r),
-      ⟨by simp [bl, rows, cols],
-      begin
-        simp [-sub_eq_add_neg], norm_cast,
-        simp [length_generate] at H,
-        rw mul_comm at H,
-        exact nat.div_lt_of_lt_mul H
-      end⟩
-    ⟩
+    ⟨g.o.y + (↑n / ↑g.c - ↑g.r), ⟨by simp, goy_add_n_div_c_sub_r_lt_goy H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simpa [nth_generate, abs_data_eq_nth_f, expand_gtr]
 
-lemma nth_generate_f' {α : Type} {g : fgrid α} {n} (H : n < length ℘ g) :
+lemma nth_generate_f {α : Type} {g : fgrid α} {n} (H : n < length ℘ g) :
   nth (℘ g) n =
   g.data
-    ⟨
-      g.o.y + (↑n / ↑g.c - ↑g.r),
-      ⟨by simp,
-      begin
-        simp [-sub_eq_add_neg], norm_cast,
-        simp [length_generate] at H,
-        rw mul_comm at H,
-        exact nat.div_lt_of_lt_mul H
-      end⟩
-    ⟩
+    ⟨g.o.y + (↑n / ↑g.c - ↑g.r), ⟨by simp, goy_add_n_div_c_sub_r_lt_goy H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simp [nth_le_nth H, some_nth_le_generate_f]
 
-lemma mod_add_div_coe {i c : ℕ} : |↑i % ↑c| + |↑i / ↑c| * c = i :=
-begin
-  rw [← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add, int.coe_nat_mul],
-  have : ↑i % ↑c ≥ (0 : ℤ), by simp [ge_from_le]; linarith,
-  repeat { rw nat_abs_of_nonneg; try { assumption } }, 
-  rw [mul_comm, mod_add_div]
-end
+lemma nth_le_generate_f {α : Type} {g : fgrid α} {n} (H) :
+  nth_le (℘ g) n H =
+  g.data
+    ⟨g.o.y + (↑n / ↑g.c - ↑g.r), ⟨by simp, goy_add_n_div_c_sub_r_lt_goy H⟩⟩
+    ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
+  := by simpa [nth_generate, abs_data_eq_nth_f, expand_gtr]
 
 lemma generate_eq_data {α : Type} (g : agrid₀ α) :
   ℘ g = g.data.to_list :=
@@ -1302,7 +1287,7 @@ begin
   rename hi₁_1 hi,
   rcases g with ⟨⟨r, c, h, ⟨data, hd⟩⟩, o⟩,
   simp [-sub_eq_add_neg, rows, cols] at *,
-  rw [nth_le_nth (by simpa [length_generate_eq_sizes]), nth_generate_a],
+  rw [nth_le_nth (by simpa [length_generate_eq_sizes]), some_nth_le_generate_a],
   rw nth_le_nth hi₂, simp,
   have : |↑i % ↑c| + |↑i / ↑c| * c = i, from mod_add_div_coe,
   repeat { rw ← nth_le_nth }, simp [this]
@@ -1374,18 +1359,13 @@ begin
       {r := g₁r, c := g₁c, h := g₂h, o := g₁o, data := g₂d} : fgrid α
     )) i (hl₂.symm ▸ i_bounded), { rw h, intro, refl },
   specialize h₁ (hl₁.symm ▸ i_bounded),
-  simp [
-    -sub_eq_add_neg, nth_generate, abs_data_eq_nth_f,
-    relative_grid.data, vector.nth, tl, bl, nth_le_gip_g,
-    bl, expand_gtr, rows, cols
-  ] at h₁,
-  have : g₁o.y - ↑g₁r + (↑|y - tlx| + ↑|x - tly| * ↑g₁c) / ↑g₁c = x,
+  simp [-sub_eq_add_neg, nth_le_generate_f] at h₁,
+  have : g₁o.y + ((↑|y - tlx| + ↑|x - tly| * ↑g₁c) / ↑g₁c - ↑g₁r) = x,
     {
-      change g₁o.y - ↑g₁r with tly,
       repeat { rw nat_abs_of_nonneg; try { assumption } },
       rw @int.add_mul_div_right _ _ ↑g₁c (by simp [colsnezero]),
       rw div_eq_zero_of_lt c_nonneg (sub_lt_iff_lt_add'.2 yu),
-      linarith
+      simp [tly]
     },
   simp only [this] at h₁,
   have : g₁o.x + ↑|y - tlx| % ↑g₁c = y,
@@ -1556,7 +1536,7 @@ begin
   simp [fgrid_of_agrid, fgrid_of_agrid] at *,
   apply list.ext_le (hl₂.trans hl₁.symm) (λi hi₁ hi₂, _),
   simp [
-    nth_generate, abs_data_eq_nth_a', abs_data_eq_nth_f,
+    nth_le_generate_f, nth_generate, abs_data_eq_nth_a', abs_data_eq_nth_f,
     tl, bl, rows, cols, expand_gtr
   ]
 end
@@ -1661,11 +1641,12 @@ begin
     },
     {
       intros,
+      rw nth_le_generate_f, 
       simp only [
         nth_generate, abs_data, data, expand_gtr, bl, (∘),
         relpoint_of_gpoint, prod_of_rel_point, uncurry, rows, cols, tl,
         rows_of_box, cols_of_box
-      ], simp, unfold_coes
+      ], simp
     }
 end
 
