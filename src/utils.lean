@@ -1333,8 +1333,7 @@ begin
       cases l₁ with x xs,
         {simp},
         {
-          simp, simp at h,
-          rw nat.one_add at h,
+          simp, simp at h, rw nat.one_add at h,
           have h : length xs ≤ n, from le_of_succ_le_succ h,
           specialize @ih xs l₂ (not_lt.2 h),
           rw [ih, succ_eq_add_one, add_comm, nat.add_sub_add_left]
