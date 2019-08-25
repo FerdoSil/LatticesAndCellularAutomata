@@ -101,9 +101,9 @@ begin
   unfold step_n,
   rw @periode_cycle _ _ _ _ 2,
     {
-      rw [h, iterate_one,
-      iterate_zero, h₃,
-      caut_eq_iff]; try { by simp [col_gol, row_gol, mk_gol] },
+      rw [
+        h, iterate_one, iterate_zero, h₃, caut_eq_iff
+      ]; try { by simp [col_gol, row_gol, mk_gol] },
       refl
     },
     {
