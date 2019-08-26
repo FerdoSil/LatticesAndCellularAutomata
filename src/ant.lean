@@ -76,11 +76,11 @@ def la_step (cell : cellT) (neigh : list cellT) :=
   step cell A
   end end end end
 
-def mk_ant (g : agrid₀ cellT) : ant :=
+def mk_ant (g : vec_grid₀ cellT) : ant :=
   ⟨g, W, cautomatons.neumann, la_step, cautomatons.ext_one⟩
 
 def ant_g :=
-  agrid₀.mk ⟨11, 11, dec_trivial,
+  vec_grid₀.mk ⟨11, 11, dec_trivial,
 	          ⟨[W, W, W, W, W, W, W, W, W, W, W,
               W, W, W, W, W, W, W, W, W, W, W,
               W, W, W, W, W, W, W, W, W, W, W,

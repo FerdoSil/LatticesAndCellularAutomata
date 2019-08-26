@@ -5,7 +5,7 @@ open utils
 namespace matrix
 
 structure matrix (m n : ℕ) (α : Type) :=
-  (g  : agrid₀ α)
+  (g  : vec_grid₀ α)
   (hr : g.r = m)
   (hc : g.c = n)
 
@@ -50,12 +50,12 @@ instance matrix_functor_law : is_lawful_functor (matrix m n) := {
 
 def m₁ : matrix 5 2 ℕ :=
   matrix.mk
-    (agrid₀.mk ⟨5, 2, dec_trivial, ⟨[1, 3, 4, 5, 7, 8, 9, 10, 11, 12], dec_trivial⟩⟩ ⟨5, 1⟩)
+    (vec_grid₀.mk ⟨5, 2, dec_trivial, ⟨[1, 3, 4, 5, 7, 8, 9, 10, 11, 12], dec_trivial⟩⟩ ⟨5, 1⟩)
     rfl rfl
 
 def m₂ : matrix 2 3 ℕ :=
   matrix.mk
-    (agrid₀.mk ⟨2, 3, dec_trivial, ⟨[2, 2, 2, 2, 2, 2], dec_trivial⟩⟩ ⟨0, 0⟩)
+    (vec_grid₀.mk ⟨2, 3, dec_trivial, ⟨[2, 2, 2, 2, 2, 2], dec_trivial⟩⟩ ⟨0, 0⟩)
     rfl rfl
 
 instance [has_add α] : has_add (matrix m n α) := {
@@ -70,7 +70,7 @@ instance [has_add α] : has_add (matrix m n α) := {
 }
 
 def transpose (m₁ : matrix m n α) : matrix n m α :=
-  ⟨(agrid_of_fgrid ⟨
+  ⟨(vecgrid_of_fgrid ⟨
       n, m, begin
               cases m₁ with g h₁ h₂,
               subst h₁, subst h₂,
@@ -108,7 +108,7 @@ begin
     {
       intros n h₁ h₂, rw nth_le_generate_f,
       simp [abs_data_eq_nth_a', tl, bl, vector.nth_eq_nth_le, vector.to_list],
-      rw [← option.some_inj, ← list.nth_le_nth, nth_agrid_of_fgrid],
+      rw [← option.some_inj, ← list.nth_le_nth, nth_vecgrid_of_fgrid],
       have : |↑n % ↑g.c| + g.c * |↑n / ↑g.c| < list.length g.data.val,
         by rw [mul_comm, mod_add_div_coe]; rw generate_eq_data at h₂; exact h₂,
       simp [length_generate_eq_size, size] at h₂,

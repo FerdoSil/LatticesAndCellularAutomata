@@ -14,7 +14,7 @@ open grid
 section cautomatons
 
 structure cautomaton (α : Type) [decidable_eq α] :=
-  (g     : agrid₀ α)
+  (g     : vec_grid₀ α)
   (empty : α)
   (neigh : point → list point)
   (f     : α → list α → α)
@@ -224,7 +224,7 @@ instance decidable_aut_eq {α} [decidable_eq α] {a₁ a₂} :
 def ext_aut (a : cautomaton α) : cautomaton α :=
   let new_bb := a.ext (grid_bounds a.g) in
   let new_grid :=
-    fgrid.mk
+    fgrid₀.mk
       (rows_of_box new_bb)
       (cols_of_box new_bb)
       (mul_pos rows_of_box_pos cols_of_box_pos)
@@ -245,11 +245,11 @@ def next_gen (a : cautomaton α) : cautomaton α :=
   let new_grid := (ext_aut a).g in
   let cells := ℘ new_grid in
   let neighs := map a.neigh (gip_g new_grid) in
-  let defaulted := @default_if_nex (agrid₀ α) _ a.empty new_grid in
+  let defaulted := @default_if_nex (vec_grid₀ α) _ a.empty new_grid in
   let neigh_cells := map (list.map defaulted) neighs in
   let new_cells := zip_with a.f cells neigh_cells in
   let grid :=
-    @agrid₀.mk _
+    @vec_grid₀.mk _
       ⟨grid_rows new_grid, grid_cols new_grid,
        mul_pos rows_of_box_pos cols_of_box_pos,
       ⟨new_cells, by simp [
@@ -303,10 +303,10 @@ def count_at_single {α : Type} [decidable_eq α] (neigh : list α) (valid : α)
 def yield_at_if_in_neigh {α : Type} [decidable_eq α]
   (a : cautomaton α) (p : point) :=
   if p ∈ a.neigh p
-  then some $ @default_if_nex (agrid₀ α) _ a.empty a.g p
+  then some $ @default_if_nex (vec_grid₀ α) _ a.empty a.g p
   else none
 
-def yield_at (p : point) : α := @default_if_nex (agrid₀ α) _ a.empty a.g p
+def yield_at (p : point) : α := @default_if_nex (vec_grid₀ α) _ a.empty a.g p
 
 def mod_at (p : point) (x : α) (a : cautomaton α) : cautomaton α :=
   ⟨modify_at p x a.g, a.empty, a.neigh, a.f, a.ext⟩
@@ -324,10 +324,10 @@ def count (c : α) : ℕ := count_grid a.g c
 
 lemma count_grid_eq_count {x} : count a x = count_grid a.g x := rfl
 
-lemma count_cast_foa (a : agrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
+lemma count_cast_foa (a : vec_grid₀ α) {x} : count_grid ↑a x = count_grid a x :=
   by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
-lemma count_cast_aof (a : fgrid α) {x} : count_grid ↑a x = count_grid a x :=
+lemma count_cast_aof (a : fgrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
   by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
 lemma yield_at_nonempty {p} {a : cautomaton α}

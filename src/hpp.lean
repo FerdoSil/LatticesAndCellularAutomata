@@ -155,11 +155,11 @@ begin
   delta translation, simp
 end
 
-def mk_hpp (g : agrid₀ cellT) : hpp :=
+def mk_hpp (g : vec_grid₀ cellT) : hpp :=
   ⟨g, X, cautomatons.neumann, (λ_ neigh, translation neigh), cautomatons.ext_one⟩
 
 def hpp_g :=
-  agrid₀.mk ⟨11, 11, dec_trivial,
+  vec_grid₀.mk ⟨11, 11, dec_trivial,
 	          ⟨[X, X, X, X, X, X, X, X, X, X, X,
               X, X, X, X, X, X, X, X, X, X, X,
               X, X, X, X, X, X, X, X, X, X, X,

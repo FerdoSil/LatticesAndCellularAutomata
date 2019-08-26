@@ -286,7 +286,7 @@ private lemma abs_nat_lt : ∀{n m : ℤ}, (0 ≤ n) → n < m → nat_abs n < n
         exact lt_of_add_lt_add_right nltm
       }
     }
-    -- This proof breaks beta reduction further down the line for some reason.
+    -- This proof breaks beta reduction further down the line.
     -- rw ← int.coe_nat_lt_coe_nat_iff,
     -- have : of_nat n₂ ≥ (0 : ℤ), linarith,
     -- repeat { rw int.nat_abs_of_nonneg }; assumption

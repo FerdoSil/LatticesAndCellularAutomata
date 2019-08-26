@@ -37,18 +37,18 @@ def step : cellT → ℕ → cellT
 def ww_step (cell : cellT) (neigh : list cellT) :=
       step cell $ count_at_single neigh ehead
 
-def mk_ww (g : agrid₀ cellT) : ww :=
+def mk_ww (g : vec_grid₀ cellT) : ww :=
     ⟨g, empty, cautomatons.moore, ww_step, cautomatons.ext_id⟩
 
 def wire_g :=
-  agrid₀.mk ⟨1, 5, dec_trivial,
+  vec_grid₀.mk ⟨1, 5, dec_trivial,
               ⟨[etail, ehead, condu, condu, condu], rfl⟩⟩
                         ⟨0, 1⟩ 
 
 def wire : ww := mk_ww wire_g
 
 def or_g_10 :=
-    agrid₀.mk ⟨5, 6, dec_trivial,
+    vec_grid₀.mk ⟨5, 6, dec_trivial,
                         ⟨[etail, ehead, empty, empty, empty, empty,
                           empty, empty, condu, empty, empty, empty,
                             empty, condu, condu, condu, condu, condu,
@@ -59,7 +59,7 @@ def or_g_10 :=
 def or_10 : ww := mk_ww or_g_10
 
 def or_g_01 :=
-    agrid₀.mk ⟨5, 6, dec_trivial,
+    vec_grid₀.mk ⟨5, 6, dec_trivial,
                         ⟨[condu, condu, empty, empty, empty, empty,
                           empty, empty, condu, empty, empty, empty,
                             empty, condu, condu, condu, condu, condu,
@@ -74,7 +74,7 @@ open cardinals
 section ww_or
 
 def or_gate' :=
-    agrid₀.mk ⟨5, 6, dec_trivial,
+    vec_grid₀.mk ⟨5, 6, dec_trivial,
                         ⟨[condu, condu, empty, empty, empty, empty,
                           empty, empty, condu, empty, empty, empty,
                             empty, condu, condu, condu, condu, condu,
@@ -120,7 +120,7 @@ instance ww₁_to_str : has_to_string ww₁ := ⟨str_of_ww₁⟩
 
 instance ww₁_repr : has_repr ww₁ := ⟨str_of_ww₁⟩
 
-def mk_ww₁ (g : agrid₀ cellT) (inputs outputs : list inout) : ww₁ :=
+def mk_ww₁ (g : vec_grid₀ cellT) (inputs outputs : list inout) : ww₁ :=
     ⟨mk_ww g, inputs, outputs⟩
 
 def write (a : ww₁) (n : ℕ) (b : bool) : ww₁ :=
@@ -164,7 +164,7 @@ def read (a : ww₁) (n : ℕ) : bool :=
     end
 
 def xor_gate' :=
-    agrid₀.mk ⟨7, 7, dec_trivial,
+    vec_grid₀.mk ⟨7, 7, dec_trivial,
                         ⟨[condu, condu, empty, empty, empty, empty, empty, 
                           empty, empty, condu, empty, empty, empty, empty, 
                             empty, condu, condu, condu, condu, empty, empty,

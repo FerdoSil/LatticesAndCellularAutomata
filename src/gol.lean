@@ -49,31 +49,31 @@ open cellT
 attribute [reducible]
 def gol := cautomaton cellT
 
-def mk_gol (g : agrid₀ cellT) : gol :=
+def mk_gol (g : vec_grid₀ cellT) : gol :=
   ⟨g, D, cautomatons.moore, gol_step, cautomatons.ext_one⟩
 
-def empty := fgrid.mk 2 2 dec_trivial ⟨0, 1⟩ (λx y, D)
+def empty := fgrid₀.mk 2 2 dec_trivial ⟨0, 1⟩ (λx y, D)
 
 def empty_g :=
-  agrid₀.mk ⟨2, 2, dec_trivial, ⟨[D, D, D, D], rfl⟩⟩ ⟨0, 1⟩ 
+  vec_grid₀.mk ⟨2, 2, dec_trivial, ⟨[D, D, D, D], rfl⟩⟩ ⟨0, 1⟩ 
 
 def empty_aut : gol := mk_gol empty
 
 def empty_aut_g : gol := mk_gol empty_g
 
-def row := fgrid.mk 1 3 dec_trivial ⟨-1, 0⟩ (λx y, A)
+def row := fgrid₀.mk 1 3 dec_trivial ⟨-1, 0⟩ (λx y, A)
 
 def row_gol : gol := mk_gol row
 
-def col := agrid₀.mk ⟨3, 1, dec_trivial, ⟨[A, A, A], rfl⟩⟩ ⟨0, 1⟩
+def col := vec_grid₀.mk ⟨3, 1, dec_trivial, ⟨[A, A, A], rfl⟩⟩ ⟨0, 1⟩
 
 def col_gol : gol := mk_gol col
 
-def box := fgrid.mk 2 2 dec_trivial ⟨0, 1⟩ (λx y, A)
+def box := fgrid₀.mk 2 2 dec_trivial ⟨0, 1⟩ (λx y, A)
 
 def box_gol : gol := mk_gol box
 
-def dies := agrid₀.mk ⟨3, 2, dec_trivial, ⟨[A, D, A, D, D, A], rfl⟩⟩ ⟨0, 1⟩
+def dies := vec_grid₀.mk ⟨3, 2, dec_trivial, ⟨[A, D, A, D, D, A], rfl⟩⟩ ⟨0, 1⟩
 
 def dies_gol : gol := mk_gol dies
 
