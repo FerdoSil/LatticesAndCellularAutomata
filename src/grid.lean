@@ -1,6 +1,6 @@
 import utils
 import data.vector data.list data.int.basic tactic.omega data.fin
-       tactic.linarith
+       tactic.linarith tactic.sanity_check
 
 open utils
 
@@ -557,7 +557,7 @@ have h₁ : length (range_pure a b) = |b - a|,
 
 def gip (p₁ p₂ : point) : list point :=
   join (map (grp p₁.x p₂.x) (range_pure p₁.y p₂.y))
-#eval gip ⟨0 ,0⟩ ⟨5, 5⟩
+
 open relative_grid grid
 
 def gip_g := gip (bl g) (gtr g)
@@ -1206,8 +1206,8 @@ lemma nth_generate_a {α : Type} {g : vec_grid₀ α} {n} (H : n < length ℘ g)
   nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c) :=
   by simp [nth_le_nth, some_nth_le_generate_a, H]
 
-private lemma goy_add_n_div_c_sub_r_lt_goy {α : Type} {g : fgrid₀ α} {n : ℕ}
-  (h : n < length ℘ g) : (g.o).y + (↑n / ↑(g.c) - ↑(g.r)) < (g.o).y :=
+private lemma goy_add_n_div_c_lt_goy_add_r {α : Type} {g : fgrid₀ α} {n : ℕ}
+  (h : n < length ℘ g) : g.o.y + ↑n / ↑g.c < g.o.y + ↑g.r :=
   begin
     simp [-sub_eq_add_neg], norm_cast,
     rw [length_generate, nat.mul_comm] at h,
@@ -1217,21 +1217,21 @@ private lemma goy_add_n_div_c_sub_r_lt_goy {α : Type} {g : fgrid₀ α} {n : �
 lemma some_nth_le_generate_f {α : Type} {g : fgrid₀ α} {n} (H) :
   some (nth_le (℘ g) n H) =
   g.data
-    ⟨g.o.y + (↑n / ↑g.c - ↑g.r), ⟨by simp, goy_add_n_div_c_sub_r_lt_goy H⟩⟩
+    ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simpa [nth_generate, abs_data_eq_nth_f, expand_gtr]
 
 lemma nth_generate_f {α : Type} {g : fgrid₀ α} {n} (H : n < length ℘ g) :
   nth (℘ g) n =
   g.data
-    ⟨g.o.y + (↑n / ↑g.c - ↑g.r), ⟨by simp, goy_add_n_div_c_sub_r_lt_goy H⟩⟩
+    ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simp [nth_le_nth H, some_nth_le_generate_f]
 
 lemma nth_le_generate_f {α : Type} {g : fgrid₀ α} {n} (H) :
   nth_le (℘ g) n H =
   g.data
-    ⟨g.o.y + (↑n / ↑g.c - ↑g.r), ⟨by simp, goy_add_n_div_c_sub_r_lt_goy H⟩⟩
+    ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simpa [nth_generate, abs_data_eq_nth_f, expand_gtr]
 
@@ -1295,19 +1295,17 @@ begin
     by simp [contra] at g₁h; exact absurd g₁h (lt_irrefl _),
   have colsnezero : g₁c ≠ 0, assume contra,
     by simp [contra] at g₂h; exact absurd g₂h (lt_irrefl _),
-  let tly := g₁o.y - g₁r,
-  let tlx := g₁o.x,
-  let i := |x - tly| * g₁c + |y - tlx|,
-  have hi : i = |x - tly| * g₁c + |y - tlx|, refl,
-  have r_nonneg : x - tly ≥ 0,
+  let i := |x -  g₁o.y| * g₁c + |y - g₁o.x|,
+  have hi : i = |x - g₁o.y| * g₁c + |y - g₁o.x|, refl,
+  have r_nonneg : x - g₁o.y ≥ 0,
     by simp only [ge_from_le, le_sub_iff_add_le, zero_add]; exact xl,
-  have c_nonneg : y - tlx ≥ 0,
+  have c_nonneg : y - g₁o.x ≥ 0,
     by simp only [ge_from_le, le_sub_iff_add_le, zero_add]; exact yl,
   have i_nonneg : 0 ≤ i, by linarith,
   have i_bounded : i < g₁r * g₁c,
     {
-      have yb : y - tlx < ↑g₁c, from sub_lt_iff_lt_add'.2 yu,
-      have xb : x - tly < ↑g₁r, by rw [← sub_add, add_comm]; linarith,
+      have yb : y - g₁o.x < ↑g₁c, from sub_lt_iff_lt_add'.2 yu,
+      have xb : x - g₁o.y < ↑g₁r, from sub_lt_iff_lt_add'.2 xu,
       rw hi,
       apply linearize_array;
         try { rw ← int.coe_nat_lt_coe_nat_iff };
@@ -1322,19 +1320,19 @@ begin
     )) i (hl₂.symm ▸ i_bounded), { rw h, intro, refl },
   specialize h₁ (hl₁.symm ▸ i_bounded),
   simp [-sub_eq_add_neg, nth_le_generate_f] at h₁,
-  have : g₁o.y + ((↑|y - tlx| + ↑|x - tly| * ↑g₁c) / ↑g₁c - ↑g₁r) = x,
+  have : g₁o.y + (↑|y - g₁o.x| + ↑|x - g₁o.y| * ↑g₁c) / ↑g₁c = x,
     {
       repeat { rw nat_abs_of_nonneg; try { assumption } },
       rw @int.add_mul_div_right _ _ ↑g₁c (by simp [colsnezero]),
       rw div_eq_zero_of_lt c_nonneg (sub_lt_iff_lt_add'.2 yu),
-      simp [tly]
+      simp
     },
   simp only [this] at h₁,
-  have : g₁o.x + ↑|y - tlx| % ↑g₁c = y,
+  have : g₁o.x + ↑|y - g₁o.x| % ↑g₁c = y,
     {
       repeat { rw nat_abs_of_nonneg; try { assumption } },
       rw mod_eq_of_lt c_nonneg (sub_lt_iff_lt_add'.2 yu),
-      simp [tlx]
+      simp
     },
   simp only [this] at h₁,
   exact h₁
@@ -1378,9 +1376,9 @@ def right :=
 def grid_bounds : bounding_box :=
   ⟨gbl g, gtr g, grid_is_bounding_box⟩
 
-def overlaid_by (p₁ p₂ : bounding_box) :=
-  (p₂.p₁.x ≤ p₁.p₁.x ∧ p₁.p₂.x ≤ p₂.p₂.x) ∧
-  (p₂.p₂.y ≤ p₁.p₂.y ∧ p₁.p₁.y ≤ p₂.p₁.y)
+def overlaid_by (bb₁ bb₂ : bounding_box) :=
+  (bb₂.p₁.x ≤ bb₁.p₁.x ∧ bb₁.p₂.x ≤ bb₂.p₂.x) ∧
+  (bb₁.p₂.y ≤ bb₂.p₂.y ∧ bb₂.p₁.y ≤ bb₁.p₁.y)
 
 def in_grid_bounded (p : point)
   (h : is_in_grid' g p) :=
@@ -1407,12 +1405,14 @@ end
 
 lemma is_in_larger {bb₁ bb₂ : bounding_box} {xy : point}
   (h : xy ∈ bb₁) (h₁ : overlaid_by bb₁ bb₂) : xy ∈ bb₂ :=
-  ⟨⟨le_trans h₁.2.1 h.1.1, lt_of_lt_of_le h.1.2 h₁.2.2⟩,
+  ⟨⟨le_trans h₁.2.2 h.1.1, lt_of_lt_of_le h.1.2 h₁.2.1⟩,
    ⟨le_trans h₁.1.1 h.2.1, lt_of_lt_of_le h.2.2 h₁.1.2⟩⟩
 
 private def bounded_prod_of_point {p : point} {g : α} (h : p ∈ g) :
   bounded (bl g).x (gtr g).x ×
-  bounded (gtr g).y (bl g).y := ⟨make_bounded h.2, make_bounded h.1⟩
+  bounded (bl g).y (gtr g).y := ⟨make_bounded h.2, make_bounded h.1⟩
+
+open bounding_box
 
 def subgrid (bb : bounding_box) (h : overlaid_by bb (bbox_of_grid g)) :
             fgrid₀ (carrier α) :=
@@ -1423,16 +1423,19 @@ def subgrid (bb : bounding_box) (h : overlaid_by bb (bbox_of_grid g)) :
       unfold overlaid_by at h, cases x with x hx, simp,
       rw bbox_of_grid_p₁ at h, rw bbox_of_grid_p₂ at h,
       exact ⟨
+        le_trans h.2.2 hx.1,
         begin
-          have : (bb.p₁).y - ↑(rows_of_box bb) = bb.p₂.y,
-            by simp [
-                 -sub_eq_add_neg, bounding_box.p₁, bounding_box.p₂, rows_of_box,
-                 nat_abs_of_nonneg (nonneg_of_lt (grid_bounded_iff.1 bb.3).2),
-                 sub_sub_cancel
-               ], rw this at hx,
-          exact le_trans h.2.1 hx.1
-        end,
-        lt_of_lt_of_le hx.2 h.2.2
+          have : bb.p₁.y + ↑(rows_of_box bb) = bb.p₂.y,
+            begin
+              have : (bb.p₂).y - (bb.p₁).y ≥ 0,
+                by simp [-sub_eq_add_neg, ge_from_le];
+                   apply int.le_of_lt (grid_bounded_iff.1 bb.3).2,
+              simp [-sub_eq_add_neg, rows_of_box],
+              rw nat_abs_of_nonneg this,
+              simp
+            end, rw this at hx,
+          exact lt_of_lt_of_le hx.2 h.2.1
+        end
       ⟩
     end⟩, ⟨y.1,
     begin

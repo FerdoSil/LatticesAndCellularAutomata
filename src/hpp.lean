@@ -171,7 +171,7 @@ def hpp_g :=
               X, X, X, X, X, X, X, X, X, X, X,
               X, X, X, X, X, X, X, X, X, X, X,
               X, X, X, X, X, X, X, X, X, X, X], rfl⟩⟩
-						⟨0, 1⟩ 
+						⟨0, 0⟩ 
 
 def simple := mk_hpp hpp_g
 

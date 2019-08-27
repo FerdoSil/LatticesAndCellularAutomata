@@ -61,11 +61,11 @@ def empty_aut : gol := mk_gol empty
 
 def empty_aut_g : gol := mk_gol empty_g
 
-def row := fgrid₀.mk 1 3 dec_trivial ⟨-1, 0⟩ (λx y, A)
+def row := fgrid₀.mk 1 3 dec_trivial ⟨0, 0⟩ (λx y, A)
 
 def row_gol : gol := mk_gol row
 
-def col := vec_grid₀.mk ⟨3, 1, dec_trivial, ⟨[A, A, A], rfl⟩⟩ ⟨0, 1⟩
+def col := vec_grid₀.mk ⟨3, 1, dec_trivial, ⟨[A, A, A], rfl⟩⟩ ⟨1, -1⟩
 
 def col_gol : gol := mk_gol col
 
@@ -77,6 +77,7 @@ def dies := vec_grid₀.mk ⟨3, 2, dec_trivial, ⟨[A, D, A, D, D, A], rfl⟩�
 
 def dies_gol : gol := mk_gol dies
 
+
 private lemma col_even {n} (h : n % 2 = 0) {a} {g} 
   (h₂ : a = mk_gol g)
   (h₃ : a = col_gol) : step_n a n = a :=
@@ -84,11 +85,7 @@ begin
   unfold step_n,
   rw @periode_cycle _ _ _ _ 2,
     {rw [h, iterate_zero]},
-    {
-      rw h₂, subst h₃,
-      rw caut_eq_iff; try { by simp },
-      rw ← h₂, refl
-    }
+    {rw h₂, subst h₃, rw ← h₂, refl}
 end
 
 lemma col_gol_even {n} (h : n % 2 = 0) : step_n col_gol n = col_gol :=
@@ -102,13 +99,11 @@ begin
   rw @periode_cycle _ _ _ _ 2,
     {
       rw [
-        h, iterate_one, iterate_zero, h₃, caut_eq_iff
+        h, iterate_one, iterate_zero, h₃
       ]; try { by simp [col_gol, row_gol, mk_gol] },
       refl
     },
-    {
-      rw h₃, refl
-    }
+    {rw h₃, refl}
 end
 
 lemma col_row_odd {n} (h : n % 2 = 1) : step_n col_gol n = row_gol :=

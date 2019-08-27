@@ -73,11 +73,9 @@ instance neigh_gridpoint_coe {α} [grid α] (g : α) :
 def ext_id : bounding_box → bounding_box := id
 
 def ext_one : bounding_box → bounding_box
-  | ⟨⟨x₁, y₁⟩, ⟨x₂, y₂⟩, h⟩ := ⟨⟨x₁ - 1, y₁ + 1⟩, ⟨x₂ + 1, y₂ - 1⟩,
-                                and.intro
-                                  (add_lt_add h.left dec_trivial)
-                                  (add_lt_add h.right dec_trivial)
-                               ⟩
+  | ⟨⟨x₁, y₁⟩, ⟨x₂, y₂⟩, h⟩ := ⟨⟨x₁ - 1, y₁ - 1⟩, ⟨x₂ + 1, y₂ + 1⟩,
+                                ⟨(add_lt_add h.1 dec_trivial),
+                                 (add_lt_add h.2 dec_trivial)⟩⟩
 
 end cautomatons
 
@@ -124,14 +122,10 @@ def compute_bounds : bounding_box :=
   let max_x    := max_element xs (pres_unempty h $ by simp) in
   let min_y    := min_element ys (pres_unempty h $ by simp) in 
   let max_y    := max_element ys (pres_unempty h $ by simp) in
-  ⟨⟨min_x, max_y + 1⟩, ⟨max_x + 1, min_y⟩,
+  ⟨⟨min_x, min_y⟩, ⟨max_x + 1, max_y + 1⟩,
   begin
-    simp [(↗), min_x, max_x, min_y, max_y],
-    split;
-      {
-        rw add_comm,
-        exact int.lt_add_one_of_le (min_elem_le_max_elem _ _)
-      }
+    simp [(↗), min_x, max_x, min_y, max_y];
+    split; rw add_comm; exact int.lt_add_one_of_le (min_elem_le_max_elem _ _)
   end⟩
 
 lemma compute_bounds_pres_overlaid
@@ -167,18 +161,6 @@ begin
       exact h₅.2.2
     },
     {
-      apply le_min_elem_of_all _ _ _ (λx, λh₁, _),
-      simp at h₁, rcases h₁ with ⟨y₁, rest, h₃⟩, subst h₃,
-      simp [expand_gtr, point.x, point.y],
-      apply (zunzip_filter_first_irrel rest),
-      rw ← h₂, intros y h₄,
-      have h₅ := gip_g_in_grid h₄,
-      simp [flip, is_in_grid, bbox_of_grid, expand_gtr, point.x] at h₅,
-      rcases h₅ with ⟨⟨h₅, h₆⟩, ⟨h₇, h₈⟩⟩,
-      rw add_comm, apply le_add_of_neg_add_le, rw add_comm,
-      exact h₅
-    }, 
-    {
       rw [add_comm, ← sub_le_sub_iff_right (1 : ℤ), add_sub_assoc],
       have : 1 - 1 = (0 : ℤ), from dec_trivial, rw [this, add_zero],
       apply max_le_elem_of_all _ _ _ (λx, λh₁, _),
@@ -189,6 +171,17 @@ begin
       simp [flip, is_in_grid, bbox_of_grid] at h₅,
       rw int.le_sub_one_iff,
       exact h₅.1.2
+    }, 
+    {
+      apply le_min_elem_of_all _ _ _ (λx, λh₁, _),
+      simp at h₁, rcases h₁ with ⟨y₁, rest, h₃⟩, subst h₃,
+      simp [expand_gtr, point.x, point.y],
+      apply (zunzip_filter_first_irrel rest),
+      rw ← h₂, intros y h₄,
+      have h₅ := gip_g_in_grid h₄,
+      simp [flip, is_in_grid, bbox_of_grid, expand_gtr, point.x] at h₅,
+      rcases h₅ with ⟨⟨h₅, h₆⟩, ⟨h₇, h₈⟩⟩,
+      linarith
     }
   }
 end
@@ -231,7 +224,7 @@ def ext_aut (a : cautomaton α) : cautomaton α :=
       new_bb.p₁
       (λx y, if h : (⟨y, x⟩ : point) ∈ a.g
              then abs_data a.g $ grid_point_of_prod'
-                     ((make_bounded h.left), (make_bounded h.right))
+                     ((make_bounded h.1), (make_bounded h.2))
              else a.empty) in
   ⟨new_grid, a.empty, a.neigh, a.f, a.ext⟩
 
@@ -256,7 +249,7 @@ def next_gen (a : cautomaton α) : cautomaton α :=
                        zip_with_len_l,
                        length_generate_eq_size,
                        size,
-                       rows_eq_bly_sub_try,
+                       rows_eq_try_sub_bly,
                        cols_eq_trx_sub_blx,
                        length_gip_g,
                        length_gip,

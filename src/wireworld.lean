@@ -165,18 +165,18 @@ def read (a : ww₁) (n : ℕ) : bool :=
 
 def xor_gate' :=
     vec_grid₀.mk ⟨7, 7, dec_trivial,
-                        ⟨[condu, condu, empty, empty, empty, empty, empty, 
-                          empty, empty, condu, empty, empty, empty, empty, 
-                            empty, condu, condu, condu, condu, empty, empty,
-                            empty, condu, empty, empty, condu, condu, condu,
-                            empty, condu, condu, condu, condu, empty, empty,
-                            empty, empty, condu, empty, empty, empty, empty,
-                            condu, condu, empty, empty, empty, empty, empty], rfl⟩⟩
-                        ⟨0, 1⟩
+      ⟨[condu, condu, empty, empty, empty, empty, empty, 
+        empty, empty, condu, empty, empty, empty, empty, 
+          empty, condu, condu, condu, condu, empty, empty,
+          empty, condu, empty, empty, condu, condu, condu,
+          empty, condu, condu, condu, condu, empty, empty,
+          empty, empty, condu, empty, empty, empty, empty,
+          condu, condu, empty, empty, empty, empty, empty], rfl⟩⟩
+      ⟨0, 0⟩
 
-def xor_gate_inputs : list inout := [⟨⟨0, -6⟩, ⟨1, -6⟩, E⟩, ⟨⟨0, 0⟩, ⟨1, 0⟩, E⟩]
+def xor_gate_inputs : list inout := [⟨⟨0, 6⟩, ⟨1, 6⟩, E⟩, ⟨⟨0, 0⟩, ⟨1, 0⟩, E⟩]
 
-def xor_gate_outputs : list inout := [⟨⟨5, -3⟩, ⟨6, -3⟩, E⟩]
+def xor_gate_outputs : list inout := [⟨⟨5, 3⟩, ⟨6, 3⟩, E⟩]
 
 def mk_xor (a : ww) : ww₁ := ⟨a, xor_gate_inputs, xor_gate_outputs⟩
 
