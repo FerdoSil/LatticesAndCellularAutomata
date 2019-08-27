@@ -204,11 +204,11 @@ instance : has_repr point := ⟨point_rep⟩
 
 def left (p₁ p₂ : point) := if p₁.x ≤ p₂.x then p₁ else p₂
 def right (p₁ p₂ : point) := if p₁.x ≤ p₂.x then p₂ else p₁
-def up (p₁ p₂ : point) := if p₁.y ≤ p₂.y then p₁ else p₂
-def down (p₁ p₂ : point) := if p₁.y ≤ p₂.y then p₂ else p₁
+def up (p₁ p₂ : point) := if p₁.y ≤ p₂.y then p₂ else p₁
+def down (p₁ p₂ : point) := if p₁.y ≤ p₂.y then p₁ else p₂
 
 def grid_sorted : point → point → Prop
-  | ⟨x, y⟩ ⟨x₁, y₁⟩ := x < x₁ ∧ y₁ < y
+  | ⟨x, y⟩ ⟨x₁, y₁⟩ := x < x₁ ∧ y < y₁
 
 infix `↗` : 50 := grid_sorted
 
@@ -222,10 +222,7 @@ instance : is_irrefl point grid_sorted := {
 
 instance : is_trans point grid_sorted := {
   trans := λ⟨x, y⟩ ⟨x₁, y₁⟩ ⟨x₂, y₂⟩ ⟨h, h₁⟩ ⟨h₂, h₃⟩,
-             begin
-               simp [(↗)] at *,
-               exact and.intro (lt_trans h h₂) (lt_trans h₃ h₁)
-             end
+             by simp [(↗)] at *; split; linarith
 }
 
 instance [c : is_irrefl point grid_sorted]
@@ -235,7 +232,7 @@ instance [c : is_irrefl point grid_sorted]
 lemma le_of_zero_le_add_le (a b c : ℤ) (h₁ : 0 ≤ b) (h₂ : a + b ≤ c) : a ≤ c :=
   by omega
 
-lemma grid_bounded_iff {p₁ p₂ : point} : p₁↗p₂ ↔ (p₁.x < p₂.x ∧ p₂.y < p₁.y) :=
+lemma grid_bounded_iff {p₁ p₂ : point} : p₁↗p₂ ↔ (p₁.x < p₂.x ∧ p₁.y < p₂.y) :=
   by cases p₁; cases p₂; simp [(↗)]
 
 lemma length_zip_left {α β : Type*} {l₁ : list α} {l₂ : list β}
@@ -243,7 +240,7 @@ lemma length_zip_left {α β : Type*} {l₁ : list α} {l₂ : list β}
   by induction l₁ with l₃h l₃t ih generalizing l₂; cases l₂; finish
 
 lemma not_grid_bounded_iff {p₁ p₂ : point} :
-  ¬p₁↗p₂ ↔ (p₂.x ≤ p₁.x ∨ p₁.y ≤ p₂.y) :=
+  ¬p₁↗p₂ ↔ (p₂.x ≤ p₁.x ∨ p₂.y ≤ p₁.y) :=
 begin
   cases p₁; cases p₂,
   unfold point.x point.y,
@@ -253,18 +250,10 @@ begin
     by_cases h₁ : p₁_x < p₂_x,
       {right, exact h h₁},
       {
-        rw not_lt_iff_eq_or_lt at h₁,
-        cases h₁; left,
-          {rw h₁},
-          {exact int.le_of_lt h₁}
+        rw not_lt_iff_eq_or_lt at h₁, finish
       }
   },
-  {
-    intros h₁,
-    cases h,
-      {exact absurd (lt_of_lt_of_le h₁ h) (lt_irrefl _)},
-      {exact h}
-  }
+  {intros h₁, cases h; linarith}
 end
 
 private lemma abs_nat_lt : ∀{n m : ℤ}, (0 ≤ n) → n < m → nat_abs n < nat_abs m
