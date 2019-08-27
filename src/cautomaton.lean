@@ -89,7 +89,7 @@ end cautomaton_props
 
 section cautomaton_ops
 
-open function list prod
+open function list prod relative_grid
 
 variables variables {α : Type} [decidable_eq α] (a : cautomaton α)
 
@@ -235,8 +235,8 @@ def ext_aut (a : cautomaton α) : cautomaton α :=
              else a.empty) in
   ⟨new_grid, a.empty, a.neigh, a.f, a.ext⟩
 
-def default_if_nex {α : Type*} [grid α] (empty : relative_grid.carrier α)
-  (g : α) (p : point) : relative_grid.carrier α :=
+def default_if_nex {α : Type*} [grid α] (empty : carrier α)
+  (g : α) (p : point) : carrier α :=
   if h : p ∈ g
   then abs_data g (grid_point_of_prod' (in_grid_bounded g p h))
   else empty
@@ -330,7 +330,7 @@ lemma count_cast_foa (a : vec_grid₀ α) {x} : count_grid ↑a x = count_grid a
 lemma count_cast_aof (a : fgrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
   by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
-lemma yield_at_nonempty {p} {a : cautomaton α}
+lemma yield_at_unempty {p} {a : cautomaton α}
   (h : yield_at a p ≠ a.empty) : p ∈ a.g :=
 begin
   by_contradiction contra,
