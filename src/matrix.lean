@@ -71,26 +71,21 @@ instance [has_add α] : has_add (matrix m n α) := {
 
 def transpose (m₁ : matrix m n α) : matrix n m α :=
   ⟨(vecgrid_of_fgrid ⟨
-      n, m, begin
-              cases m₁ with g h₁ h₂,
-              subst h₁, subst h₂,
-              exact mul_comm g.r g.c ▸ g.h
-            end, ⟨m₁.g.o.y - m, m₁.g.o.x + n⟩,
+      n, m, mul_comm m n ▸ @matrix_unempty _ _ _ m₁,
+      ⟨m₁.g.o.y, m₁.g.o.x⟩,
       λx y, abs_data m₁.g ⟨
         ⟨y.1,
         begin
           cases y with y h, simp at h, simp [expand_gtr, grid.bl],
-          have : ↑(relative_grid.rows (m₁.g)) = ↑m,
-            by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, h₁, h₂⟩; substs h₁ h₂;
-               simp [relative_grid.rows],
+          have : ↑(rows (m₁.g)) = ↑m,
+            by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, h₁, h₂⟩; substs h₁ h₂; simp [rows],
           rw this, exact h
         end⟩,
         ⟨x.1,
         begin
           cases x with x h, simp at h, simp [expand_gtr, grid.bl],
-          have : ↑(relative_grid.cols (m₁.g)) = ↑n,
-            by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, h₁, h₂⟩; substs h₁ h₂;
-               simp [relative_grid.cols],
+          have : ↑(cols (m₁.g)) = ↑n,
+            by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, h₁, h₂⟩; substs h₁ h₂; simp [cols],
           rw this, exact h
         end⟩⟩⟩), by simp, by simp⟩
 

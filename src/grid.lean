@@ -421,8 +421,8 @@ instance rg_fgrid₀ {α : Type} :
     cols     := λg, g.c,
     nonempty := λg, g.h,
     data     := λg x y,
-    g.data ⟨g.o.y + x, ⟨by simp, absolute_bounds _⟩⟩
-           ⟨g.o.x + y, ⟨by simp, absolute_bounds _⟩⟩
+      g.data ⟨g.o.y + x, ⟨by simp, absolute_bounds _⟩⟩
+             ⟨g.o.x + y, ⟨by simp, absolute_bounds _⟩⟩
 }
 
 instance ag_vec_agrid₀ {α : Type} :
