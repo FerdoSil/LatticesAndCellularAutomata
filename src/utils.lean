@@ -232,6 +232,8 @@ instance [c : is_irrefl point grid_sorted]
 lemma le_of_zero_le_add_le (a b c : ℤ) (h₁ : 0 ≤ b) (h₂ : a + b ≤ c) : a ≤ c :=
   by omega
 
+lemma zero_lt_one_add {a} : 0 < 1 + a := by omega
+
 lemma grid_bounded_iff {p₁ p₂ : point} : p₁↗p₂ ↔ (p₁.x < p₂.x ∧ p₁.y < p₂.y) :=
   by cases p₁; cases p₂; simp [(↗)]
 

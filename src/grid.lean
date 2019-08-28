@@ -280,8 +280,9 @@ def grid_point_of_prod' {g : α}
        bounded (bl g).x (gtr g).x) : grid_point g :=
   ⟨p.fst, p.snd⟩
 
-def abs_data (g : α) :=
-  (uncurry (data g)) ∘ prod_of_rel_point ∘ relpoint_of_gpoint
+def abs_data (g : α) (gp : grid_point g) :=
+  let rp := relpoint_of_gpoint gp in
+    (data g) rp.x rp.y
 
 lemma try_lt_bly : (gbl g).y < (gtr g).y :=
   (grid_bounded_iff.1 grid_is_bounding_box).2
@@ -879,11 +880,11 @@ lemma length_generate_eq_size :
 
 lemma map_generate_map_a {α β : Type} {g : vec_grid₀ α} {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
-  by simpa [(<$>), generate, abs_data, data, vector.nth_map, uncurry_def, (∘)]
+  by simpa [(<$>), generate, abs_data, data, vector.nth_map, (∘)]
 
 lemma map_generate_map_f {α β : Type} (g : fgrid₀ α) {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
-  by simpa [(<$>), generate, abs_data, data, uncurry_def, (∘)]
+  by simpa [(<$>), generate, abs_data, data]
 
 lemma dec_grid_len_eq_indices_len :
   length (℘ g) = length (gip_g g) :=
@@ -933,57 +934,40 @@ lemma fgrid_of_vecgrid_gtr {α : Type} {g : vec_grid₀ α} :
     by simp [expand_gtr, bl, cols, rows, fgrid_of_vecgrid]
 
 private theorem nth_le_grp {n} {a b r : ℤ} (h : a < b) (H) :
-  nth_le (grp a b r) n H = ⟨a + n % |b - a|, r⟩ :=
+  nth_le (grp a b r) n H = ⟨a + n, r⟩ :=
 begin
   rw ← option.some_inj, rw ← nth_le_nth H,
   induction n with n ih generalizing a b,
     {simp [expand_grp h]},
     {
-      by_cases h₁ : a + 1 < b,
-        {
-          specialize @ih (a + 1) b h₁ _,
-            {
-              simp [expand_grp h, -sub_eq_add_neg], rw ih,
-              simp [(abs_minus_plus h).symm, -sub_eq_add_neg],
-              rw length_grp h at H,
-              rw [
-                mod_eq_of_lt (coe_zero_le _),
-                mod_eq_of_lt (
-                  le_add_of_le_of_nonneg zero_le_one (coe_zero_le _)
-                )
-              ],
-              {norm_cast, rw nat.one_add, exact H},
-              {
-                rw ← nat.one_add at H,
-                rw [
-                  int.coe_nat_sub,
-                  lt_sub_iff_add_lt,
-                  add_comm, ← int.coe_nat_add,
-                  int.coe_nat_lt_coe_nat_iff
-                ],
-                {exact H},
-                {linarith}
-              }
-            },
-            {
-              rw length_grp at *; try { assumption },
-              rw ← nat.add_one at H,
-              have : n < |b - a| - 1, from nat.lt_sub_right_of_add_lt H,
-              rwa ← abs_minus_plus h
-            }
-        },
-        {
-          have : a + 1 = b, by linarith,
-          rw [expand_grp h, this] at H, simp at H,
-          have : length (grp b b r) = 0,
-            by simp [grp, range_pure_empty_iff.2 (le_refl _), zip_nil_left],
-          rw this at H, exfalso, simp at H, cases H, cases H_a
-        }
+      simp [expand_grp h],
+      have : a + 1 < b,
+        begin
+          have : a + 1 ≠ b, assume contra, by
+            simp [contra.symm, @length_grp a (a + 1) (by cc)] at H;
+            clear contra h ih; omega,
+          by_contradiction h₁,
+          replace h₁ := le_of_not_lt h₁,
+          rw le_iff_eq_or_lt at h₁, cases h₁; try { cc },
+          have : a = b, by linarith, rw [this, length_grp] at H,
+          simp at H, cases H, linarith
+        end,
+      have lenok : n < length (grp (a + 1) b r),
+        begin
+          rw length_grp this, rw length_grp h at H,
+          have eq₁ : b - (a + 1) ≥ 0, by linarith,
+          have eq₂ : b - a ≥ 0, by linarith,
+          rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg eq₁],
+          rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg eq₂] at H,
+          simp, simp at H, linarith
+        end,
+      specialize @ih (a + 1) b this lenok,
+      simp [ih]
     }
 end
 
 theorem nth_grp {n} {a b r : ℤ} (h : a < b) (H : n < length (grp a b r)) :
-  nth (grp a b r) n = some ⟨a + n % |b - a|, r⟩ :=
+  nth (grp a b r) n = some ⟨a + n, r⟩ :=
   by rw nth_le_nth H; exact congr_arg _ (nth_le_grp h _)
 
 theorem nth_le_gip {n} {p₁ p₂ : point} (h : p₁ ↗ p₂) (H) :
@@ -1005,19 +989,20 @@ begin
   induction rows with rows ih generalizing y₁ y₂ n,
     {exfalso, simp at H, cases H},
     {
-      rw expand_row_gip,
+      rw expand_row_gip _,
         {
           by_cases h₁ : n < |x₂ - x₁|,
             {
               simp [-sub_eq_add_neg], rw [nth_split, nth_grp];
-                try {simpa [length_grp x₁x₂]},
-                congr' 2,
-                rw [
-                  ← int.coe_nat_lt_coe_nat_iff,
-                  nat_abs_of_nonneg (nonneg_of_lt x₁x₂)
-                ] at h₁,
-                rw div_eq_zero_of_lt (coe_zero_le _) h₁,
-                simp [x₁x₂]
+              try {simpa [length_grp x₁x₂]},
+              congr' 2;
+              rw [
+                ← int.coe_nat_lt_coe_nat_iff,
+                nat_abs_of_nonneg (nonneg_of_lt x₁x₂)
+              ] at h₁,
+              rw mod_eq_of_lt (coe_zero_le _) h₁,
+              rw div_eq_zero_of_lt (coe_zero_le _) h₁,
+              simp
             },
             {
               generalize hcols : x₂ - x₁ = cols,
@@ -1117,7 +1102,7 @@ begin
   rw length_generate at H,
   rw [← option.some_inj, ← nth_le_nth],
   simp only [
-    abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, expand_gtr,
+    abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, expand_gtr,
     generate, nth_map
   ],
   have : n < length (attach (gip_g g)), by simpa [length_attach, length_gip_g],
@@ -1143,7 +1128,7 @@ theorem nth_generate' {n} (h : n < length ℘ g) :
 lemma abs_data_eq_nth_a {α : Type} {g : vec_grid₀ α} {p} :
   abs_data g p = vector.nth g.data (grid_point_to_fin p) :=
   by simpa [
-       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data,
+       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data,
        grid_point_to_fin, rel_point_to_fin
      ]
 
@@ -1170,7 +1155,7 @@ lemma abs_data_eq_nth_a' {α : Type} {g : vec_grid₀ α} {p} :
     exact linearize_array eq₁ eq₂
   end⟩ :=
   by simp [
-       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data,
+       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data,
        grid_point_to_fin, rel_point_to_fin, bl, rows, cols
      ]
 
@@ -1179,7 +1164,7 @@ lemma abs_data_eq_nth_f {α : Type} {g : fgrid₀ α} {p} :
 begin
   rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
   simp only [
-      abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, uncurry, data
+      abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data
   ],
   unfold_coes, simp only [fin.val, of_nat_eq_coe],
   have h₁ : x - (bl g).y ≥ 0, by linarith,
@@ -1609,7 +1594,7 @@ begin
       rw nth_le_generate_f, 
       simp only [
         nth_generate, abs_data, data, expand_gtr, bl, (∘),
-        relpoint_of_gpoint, prod_of_rel_point, uncurry, rows, cols, tl,
+        relpoint_of_gpoint, prod_of_rel_point, rows, cols, tl,
         rows_of_box, cols_of_box
       ], simp
     }
