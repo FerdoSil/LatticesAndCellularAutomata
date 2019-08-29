@@ -102,7 +102,7 @@ theorem caut_eq_iff {a₁ a₂ : cautomaton α}
   (hext : a₁.ext = a₂.ext) : a₁ = a₂ ↔ a₁.g = a₂.g :=
   ⟨λh, by simp [h], λh, by cases a₁; cases a₂; congr; cc⟩
 
-private lemma pres_unempty {α β : Type} {f} {filtered : list (α × β)}
+private lemma pres_nonempty {α β : Type} {f} {filtered : list (α × β)}
   {l : list ℤ}
   (h : ¬empty_list filtered) (h₁ : l = map f ((fst ∘ unzip) filtered)) : 
   ¬empty_list l :=
@@ -118,10 +118,10 @@ def compute_bounds : bounding_box :=
   let unzipped := fst ∘ unzip $ filtered in
   let xs       := map point.x unzipped in
   let ys       := map point.y unzipped in
-  let min_x    := min_element xs (pres_unempty h $ by simp) in
-  let max_x    := max_element xs (pres_unempty h $ by simp) in
-  let min_y    := min_element ys (pres_unempty h $ by simp) in 
-  let max_y    := max_element ys (pres_unempty h $ by simp) in
+  let min_x    := min_element xs (pres_nonempty h $ by simp) in
+  let max_x    := max_element xs (pres_nonempty h $ by simp) in
+  let min_y    := min_element ys (pres_nonempty h $ by simp) in 
+  let max_y    := max_element ys (pres_nonempty h $ by simp) in
   ⟨⟨min_x, min_y⟩, ⟨max_x + 1, max_y + 1⟩,
   begin
     simp [(↗), min_x, max_x, min_y, max_y];
@@ -321,7 +321,7 @@ lemma count_cast_foa (a : vec_grid₀ α) {x} : count_grid ↑a x = count_grid a
 lemma count_cast_aof (a : fgrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
   by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
-lemma yield_at_unempty {p} {a : cautomaton α}
+lemma yield_at_nonempty {p} {a : cautomaton α}
   (h : yield_at a p ≠ a.empty) : p ∈ a.g :=
 begin
   by_contradiction contra,

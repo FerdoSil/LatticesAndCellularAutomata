@@ -26,7 +26,7 @@ variables {m n o p : ℕ} {α β γ δ : Type}
 
 open relative_grid grid
 
-lemma matrix_unempty {m₁ : matrix m n α} : m * n > 0 :=
+lemma matrix_nonempty {m₁ : matrix m n α} : m * n > 0 :=
   by rcases m₁ with ⟨⟨⟨_, _, _, _⟩, _⟩, _, _⟩; finish
 
 def matrix_string [has_to_string α] (m : matrix m n α) :=
@@ -60,7 +60,7 @@ def m₂ : matrix 2 3 ℕ :=
 
 instance [has_add α] : has_add (matrix m n α) := {
   add := λm₁ m₂,
-    ⟨⟨⟨m, n, @matrix_unempty _ _ _ m₁,
+    ⟨⟨⟨m, n, @matrix_nonempty _ _ _ m₁,
       begin
         rcases m₁ with ⟨⟨⟨g₁r, g₁c, g₁h, g₁d⟩, g₁o⟩, hr₁, hc₁⟩,
         rcases m₂ with ⟨⟨⟨g₂r, g₂c, g₂h, g₂d⟩, g₂o⟩, hr₂, hc₂⟩,
@@ -71,7 +71,7 @@ instance [has_add α] : has_add (matrix m n α) := {
 
 def transpose (m₁ : matrix m n α) : matrix n m α :=
   ⟨(vec_grid₀_of_fgrid₀ ⟨
-      n, m, mul_comm m n ▸ @matrix_unempty _ _ _ m₁,
+      n, m, mul_comm m n ▸ @matrix_nonempty _ _ _ m₁,
       ⟨m₁.g.o.y, m₁.g.o.x⟩,
       λx y, abs_data m₁.g ⟨
         ⟨y.1,

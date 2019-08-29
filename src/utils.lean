@@ -585,16 +585,16 @@ instance decidable_empty_list {α : Type} : ∀l : list α,
   | [] := is_true rfl
   | (x :: _) := is_false (by simp [empty_list])
 
-theorem unempty_nil_eq_false {α : Type} : ¬(empty_list (@nil α)) ↔ false :=
+theorem nonempty_nil_eq_false {α : Type} : ¬(empty_list (@nil α)) ↔ false :=
   by simp [empty_list]
 
 def head1 {α : Type} (l : list α) (h : ¬empty_list l) :=
   match l, h with
-    | [], p := by rw unempty_nil_eq_false at p; contradiction
+    | [], p := by rw nonempty_nil_eq_false at p; contradiction
     | (x :: _), _ := x
   end
 
-lemma head1_unempty_eq_head {α : Type} (l : list α) (h : ¬empty_list l) :
+lemma head1_nonempty_eq_head {α : Type} (l : list α) (h : ¬empty_list l) :
   head1 l h = @head _ {
     default := begin
                  unfold empty_list at h,
@@ -610,15 +610,15 @@ end
 
 def foldr1 {α : Type} (f : α → α → α) (l : list α) (h : ¬empty_list l) : α :=
   match l, h with
-    | [], p := by rw unempty_nil_eq_false at p; contradiction
+    | [], p := by rw nonempty_nil_eq_false at p; contradiction
     | (x :: xs), _ := foldr f x xs
   end
 
-lemma foldr1_unempty_eq_foldr {α : Type} (f : α → α → α) (l : list α)
+lemma foldr1_nonempty_eq_foldr {α : Type} (f : α → α → α) (l : list α)
   (h : ¬empty_list l) : foldr1 f l h = list.foldr f (head1 l h) (tail l) :=
 begin
   cases l,
-    {rw unempty_nil_eq_false at h, contradiction},
+    {rw nonempty_nil_eq_false at h, contradiction},
     {unfold foldr1 head1 tail}
 end
 
@@ -715,8 +715,8 @@ end
 lemma max_elem_sub_min_elem_nonneg 
   {l : list ℤ} (h : ¬empty_list l) : max_element l h - min_element l h ≥ 0 :=
 begin
-  unfold min_element max_element, repeat { rw foldr1_unempty_eq_foldr },
-  rw head1_unempty_eq_head,
+  unfold min_element max_element, repeat { rw foldr1_nonempty_eq_foldr },
+  rw head1_nonempty_eq_head,
   induction l with x xs ih,
     {unfold empty_list at h, contradiction},
     {
@@ -801,7 +801,7 @@ begin
     }
 end
 
-lemma unempty_filter_ex {α : Type*} {xs : list α} {p : α → Prop}
+lemma nonempty_filter_ex {α : Type*} {xs : list α} {p : α → Prop}
   [decidable_pred p] (h : ¬empty_list (filter p xs)) :
   ∃x, x ∈ xs ∧ p x :=
 begin

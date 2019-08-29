@@ -771,7 +771,7 @@ lemma fgrid₀_fmap_c {α β : Type} {g : fgrid₀ α} {f : α → β} : (f <$> 
 def point_of_bounded_prod {a b c d : ℤ} : bounded a b × bounded c d → point
   | ⟨⟨a, _⟩, ⟨c, _⟩⟩ := ⟨a, c⟩
 
-lemma gip_g_unempty : ¬empty_list (gip_g g) :=
+lemma gip_g_nonempty : ¬empty_list (gip_g g) :=
 assume contra,
 begin
   simp [gip_g, gip] at contra,
