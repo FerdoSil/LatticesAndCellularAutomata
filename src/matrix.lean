@@ -40,7 +40,7 @@ instance matrix_to_string [has_to_string α] : has_to_string (matrix m n α) :=
 
 instance matrix_functor : functor (matrix m n) := {
   map := λα β f m,
-    ⟨f <$> m.g, by rw [agrid_fmap_r, m.hr], by rw [agrid_fmap_c, m.hc]⟩
+    ⟨f <$> m.g, by rw [vec_grid₀_fmap_r, m.hr], by rw [vec_grid₀_fmap_c, m.hc]⟩
 }
 
 instance matrix_functor_law : is_lawful_functor (matrix m n) := {
@@ -70,7 +70,7 @@ instance [has_add α] : has_add (matrix m n α) := {
 }
 
 def transpose (m₁ : matrix m n α) : matrix n m α :=
-  ⟨(vecgrid_of_fgrid ⟨
+  ⟨(vec_grid₀_of_fgrid₀ ⟨
       n, m, mul_comm m n ▸ @matrix_unempty _ _ _ m₁,
       ⟨m₁.g.o.y, m₁.g.o.x⟩,
       λx y, abs_data m₁.g ⟨
@@ -101,8 +101,8 @@ begin
       simp [size, rows, cols]
     },
     {
-      intros n h₁ h₂, rw nth_le_generate_f,
-      simp [abs_data_eq_nth_a', tl, bl, vector.nth_eq_nth_le, vector.to_list],
+      intros n h₁ h₂, rw nth_le_generate_f₀,
+      simp [abs_data_eq_nth_v₀', tl, bl, vector.nth_eq_nth_le, vector.to_list],
       rw [← option.some_inj, ← list.nth_le_nth, nth_vecgrid_of_fgrid],
       have : |↑n % ↑g.c| + g.c * |↑n / ↑g.c| < list.length g.data.val,
         by rw [mul_comm, mod_add_div_coe]; rw generate_eq_data at h₂; exact h₂,
@@ -112,8 +112,8 @@ begin
       have nltcr : n < g.r * g.c, by simp [rows, cols, *] at h₂; assumption,
       have h₃ : ↑(n / g.c) < ↑g.r,
         by rwa [int.coe_nat_lt_coe_nat_iff, nat.div_lt_iff_lt_mul _ _ cpos],
-      rw nth_generate_f,
-      simp [abs_data_eq_nth_a', vector.nth_eq_nth_le, list.nth_le_nth this, vector.to_list],
+      rw nth_generate_f₀,
+      simp [abs_data_eq_nth_v₀', vector.nth_eq_nth_le, list.nth_le_nth this, vector.to_list],
       rw [← with_bot.some_eq_coe], simp [generate_eq_data],
       congr,
         {

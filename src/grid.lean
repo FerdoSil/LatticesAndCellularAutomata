@@ -715,29 +715,29 @@ notation `℘` g:max := generate g
 
 section grid_instances
 
-instance grid_functor : functor vec_grid := {
+instance vec_grid_functor : functor vec_grid := {
   map := λα β f g, {g with data := vector.map f g.data}
 }
 
-instance grid_functor_law : is_lawful_functor vec_grid := {
+instance vec_grid_functor_law : is_lawful_functor vec_grid := {
   id_map := λα ⟨r, c, h, d⟩, by simp [(<$>)],
   comp_map := λα β γ f h ⟨r, c, h, d⟩, by simp [(<$>)]
 }
 
-instance agrid_functor : functor vec_grid₀ := {
+instance vec_grid₀_functor : functor vec_grid₀ := {
   map := λα β f g, {g with data := vector.map f g.data}
 }
 
-instance agrid_functor_law : is_lawful_functor vec_grid₀ := {
+instance vec_grid₀_functor_law : is_lawful_functor vec_grid₀ := {
   id_map := λα ⟨⟨r, c, h, d⟩, o⟩, by simp [(<$>)],
   comp_map := λα β γ f h ⟨⟨r, c, h, d⟩, o⟩, by simp [(<$>)]
 }
 
-instance fgrid_functor : functor fgrid₀ := {
+instance fgrid₀_functor : functor fgrid₀ := {
   map := λα β f g, {g with data := λx y, f (g.data x y)}
 }
 
-instance fgrid_functor_law : is_lawful_functor fgrid₀ := {
+instance fgrid₀_functor_law : is_lawful_functor fgrid₀ := {
   id_map := λα ⟨r, c, h, d, o⟩, by simp [(<$>)],
   comp_map := λα β γ f h ⟨r, c, h, d, o⟩, by simp [(<$>)]
 }
@@ -745,27 +745,27 @@ instance fgrid_functor_law : is_lawful_functor fgrid₀ := {
 end grid_instances
 
 attribute [simp]
-lemma grid_fmap_r {α β : Type} {g : vec_grid α} {f : α → β} : (f <$> g).r = g.r :=
+lemma vec_grid_fmap_r {α β : Type} {g : vec_grid α} {f : α → β} : (f <$> g).r = g.r :=
   by simp [(<$>)]
 
 attribute [simp]
-lemma grid_fmap_c {α β : Type} {g : vec_grid α} {f : α → β} : (f <$> g).c = g.c :=
+lemma vec_grid_fmap_c {α β : Type} {g : vec_grid α} {f : α → β} : (f <$> g).c = g.c :=
   by simp [(<$>)]
 
 attribute [simp]
-lemma agrid_fmap_r {α β : Type} {g : vec_grid₀ α} {f : α → β} : (f <$> g).r = g.r
+lemma vec_grid₀_fmap_r {α β : Type} {g : vec_grid₀ α} {f : α → β} : (f <$> g).r = g.r
   := by simp [(<$>)]
 
 attribute [simp]
-lemma agrid_fmap_c {α β : Type} {g : vec_grid₀ α} {f : α → β} : (f <$> g).c = g.c
+lemma vec_grid₀_fmap_c {α β : Type} {g : vec_grid₀ α} {f : α → β} : (f <$> g).c = g.c
   := by simp [(<$>)]
 
 attribute [simp]
-lemma fgrid_fmap_r {α β : Type} {g : fgrid₀ α} {f : α → β} : (f <$> g).r = g.r
+lemma fgrid₀_fmap_r {α β : Type} {g : fgrid₀ α} {f : α → β} : (f <$> g).r = g.r
   := by simp [(<$>)]
 
 attribute [simp]
-lemma fgrid_fmap_c {α β : Type} {g : fgrid₀ α} {f : α → β} : (f <$> g).c = g.c
+lemma fgrid₀_fmap_c {α β : Type} {g : fgrid₀ α} {f : α → β} : (f <$> g).c = g.c
   := by simp [(<$>)]
 
 def point_of_bounded_prod {a b c d : ℤ} : bounded a b × bounded c d → point
@@ -878,11 +878,11 @@ by unfold generate gip_g;
 lemma length_generate_eq_size :
   length (℘ g) = size g := by simp [size, length_generate]
 
-lemma map_generate_map_a {α β : Type} {g : vec_grid₀ α} {f : α → β} :
+lemma map_generate_map_v₀ {α β : Type} {g : vec_grid₀ α} {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
   by simpa [(<$>), generate, abs_data, data, vector.nth_map, (∘)]
 
-lemma map_generate_map_f {α β : Type} (g : fgrid₀ α) {f : α → β} :
+lemma map_generate_map_f₀ {α β : Type} (g : fgrid₀ α) {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
   by simpa [(<$>), generate, abs_data, data]
 
@@ -890,48 +890,48 @@ lemma dec_grid_len_eq_indices_len :
   length (℘ g) = length (gip_g g) :=
   by simp [length_generate, length_gip_g]
 
-def vecgrid_of_fgrid {α : Type} (g : fgrid₀ α) : vec_grid₀ α :=
+def vec_grid₀_of_fgrid₀ {α : Type} (g : fgrid₀ α) : vec_grid₀ α :=
   {g with data := ⟨℘ g, length_generate_eq_size _⟩}
 
-def fgrid_of_vecgrid {α : Type} (g : vec_grid₀ α) : fgrid₀ α :=
+def fgrid₀_of_vec_grid₀ {α : Type} (g : vec_grid₀ α) : fgrid₀ α :=
   {g with data := λx y, abs_data g ⟨x, y⟩}
 
-instance f_a_coe {α : Type} : has_coe (fgrid₀ α) (vec_grid₀ α) := ⟨vecgrid_of_fgrid⟩
-instance a_f_coe {α : Type} : has_coe (vec_grid₀ α) (fgrid₀ α) := ⟨fgrid_of_vecgrid⟩
+instance f₀_v₀_coe {α : Type} : has_coe (fgrid₀ α) (vec_grid₀ α) := ⟨vec_grid₀_of_fgrid₀⟩
+instance v₀_f₀_coe {α : Type} : has_coe (vec_grid₀ α) (fgrid₀ α) := ⟨fgrid₀_of_vec_grid₀⟩
 
 attribute [simp]
-lemma vecgrid_of_fgrid_r {α : Type} {g : fgrid₀ α} :
-  (vecgrid_of_fgrid g).r = g.r := by simp [vecgrid_of_fgrid]
+lemma vec_grid₀_of_fgrid₀_r {α : Type} {g : fgrid₀ α} :
+  (vec_grid₀_of_fgrid₀ g).r = g.r := by simp [vec_grid₀_of_fgrid₀]
 
 attribute [simp]
-lemma vecgrid_of_fgrid_c {α : Type} {g : fgrid₀ α} :
-  (vecgrid_of_fgrid g).c = g.c := by simp [vecgrid_of_fgrid]
+lemma vec_grid₀_of_fgrid₀_c {α : Type} {g : fgrid₀ α} :
+  (vec_grid₀_of_fgrid₀ g).c = g.c := by simp [vec_grid₀_of_fgrid₀]
 
 attribute [simp]
-lemma vecgrid_of_fgrid_o {α : Type} {g : fgrid₀ α} :
-  (vecgrid_of_fgrid g).o = g.o := by simp [vecgrid_of_fgrid]
+lemma vec_grid₀_of_fgrid₀_o {α : Type} {g : fgrid₀ α} :
+  (vec_grid₀_of_fgrid₀ g).o = g.o := by simp [vec_grid₀_of_fgrid₀]
 
 attribute [simp]
-lemma fgrid_of_vecgrid_r {α : Type} {g : vec_grid₀ α} :
-  (fgrid_of_vecgrid g).r = g.r := by simp [fgrid_of_vecgrid]
+lemma fgrid₀_of_vec_grid₀_r {α : Type} {g : vec_grid₀ α} :
+  (fgrid₀_of_vec_grid₀ g).r = g.r := by simp [fgrid₀_of_vec_grid₀]
 
 attribute [simp]
-lemma fgrid_of_vecgrid_c {α : Type} {g : vec_grid₀ α} :
-  (fgrid_of_vecgrid g).c = g.c := by simp [fgrid_of_vecgrid]
+lemma fgrid₀_of_vec_grid₀_c {α : Type} {g : vec_grid₀ α} :
+  (fgrid₀_of_vec_grid₀ g).c = g.c := by simp [fgrid₀_of_vec_grid₀]
 
 attribute [simp]
-lemma fgrid_of_vecgrid_o {α : Type} {g : vec_grid₀ α} :
-  (fgrid_of_vecgrid g).o = g.o := by simp [fgrid_of_vecgrid]
+lemma fgrid₀_of_vec_grid₀_o {α : Type} {g : vec_grid₀ α} :
+  (fgrid₀_of_vec_grid₀ g).o = g.o := by simp [fgrid₀_of_vec_grid₀]
 
 attribute [simp]
-lemma vecgrid_of_fgrid_gtr {α : Type} {g : fgrid₀ α} :
-  gtr (vecgrid_of_fgrid g) = gtr g :=
-    by simp [expand_gtr, bl, cols, rows, vecgrid_of_fgrid]
+lemma vec_grid₀_of_fgrid₀_gtr {α : Type} {g : fgrid₀ α} :
+  gtr (vec_grid₀_of_fgrid₀ g) = gtr g :=
+    by simp [expand_gtr, bl, cols, rows, vec_grid₀_of_fgrid₀]
 
 attribute [simp]
-lemma fgrid_of_vecgrid_gtr {α : Type} {g : vec_grid₀ α} :
-  gtr (fgrid_of_vecgrid g) = gtr g :=
-    by simp [expand_gtr, bl, cols, rows, fgrid_of_vecgrid]
+lemma fgrid₀_of_vec_grid₀_gtr {α : Type} {g : vec_grid₀ α} :
+  gtr (fgrid₀_of_vec_grid₀ g) = gtr g :=
+    by simp [expand_gtr, bl, cols, rows, fgrid₀_of_vec_grid₀]
 
 private theorem nth_le_grp {n} {a b r : ℤ} (h : a < b) (H) :
   nth_le (grp a b r) n H = ⟨a + n, r⟩ :=
@@ -1124,14 +1124,14 @@ theorem nth_generate' {n} (h : n < length ℘ g) :
       idx_mod_cols_bounded⟩
   ⟩⟩) := by simp [nth_le_nth h, congr_arg, nth_generate]
 
-lemma abs_data_eq_nth_a {α : Type} {g : vec_grid₀ α} {p} :
+lemma abs_data_eq_nth_v₀ {α : Type} {g : vec_grid₀ α} {p} :
   abs_data g p = vector.nth g.data (grid_point_to_fin p) :=
   by simpa [
        abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data,
        grid_point_to_fin, rel_point_to_fin
      ]
 
-lemma abs_data_eq_nth_a' {α : Type} {g : vec_grid₀ α} {p} :
+lemma abs_data_eq_nth_v₀' {α : Type} {g : vec_grid₀ α} {p} :
   abs_data g p =
   vector.nth g.data ⟨|p.x.1 - g.o.y| * g.c + |p.y.1 - g.o.x|,
   begin
@@ -1158,7 +1158,7 @@ lemma abs_data_eq_nth_a' {α : Type} {g : vec_grid₀ α} {p} :
        grid_point_to_fin, rel_point_to_fin, bl, rows, cols
      ]
 
-lemma abs_data_eq_nth_f {α : Type} {g : fgrid₀ α} {p} :
+lemma abs_data_eq_nth_f₀ {α : Type} {g : fgrid₀ α} {p} :
   abs_data g p = g.data p.x p.y :=
 begin
   rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
@@ -1173,22 +1173,22 @@ begin
   linarith
 end
 
-lemma some_nth_le_generate_a {α : Type} {g : vec_grid₀ α} {n} (H) :
+lemma some_nth_le_generate_v₀ {α : Type} {g : vec_grid₀ α} {n} (H) :
   some (nth_le (℘ g) n H) =
   nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c ) :=
 begin
   rcases g with ⟨⟨r, c, h, ⟨d, hd⟩⟩, o⟩,
   rw [nth_le_nth, nth_generate],
-  simp [abs_data_eq_nth_a', expand_gtr, bl, rows, cols, vector.nth, hd],
+  simp [abs_data_eq_nth_v₀', expand_gtr, bl, rows, cols, vector.nth, hd],
   rw mod_add_div_coe,
   simp [length_generate, rows, cols] at H,
   simp [H], simpa [hd]
 end
 
-lemma nth_generate_a {α : Type} {g : vec_grid₀ α} {n} (H : n < length ℘ g):
+lemma nth_generate_v₀ {α : Type} {g : vec_grid₀ α} {n} (H : n < length ℘ g):
   nth (℘ g) n =
   nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c) :=
-  by simp [nth_le_nth, some_nth_le_generate_a, H]
+  by simp [nth_le_nth, some_nth_le_generate_v₀, H]
 
 private lemma goy_add_n_div_c_lt_goy_add_r {α : Type} {g : fgrid₀ α} {n : ℕ}
   (h : n < length ℘ g) : g.o.y + ↑n / ↑g.c < g.o.y + ↑g.r :=
@@ -1198,26 +1198,26 @@ private lemma goy_add_n_div_c_lt_goy_add_r {α : Type} {g : fgrid₀ α} {n : �
     exact nat.div_lt_of_lt_mul h
   end
 
-lemma some_nth_le_generate_f {α : Type} {g : fgrid₀ α} {n} (H) :
+lemma some_nth_le_generate_f₀ {α : Type} {g : fgrid₀ α} {n} (H) :
   some (nth_le (℘ g) n H) =
   g.data
     ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
-  := by simpa [nth_generate, abs_data_eq_nth_f, expand_gtr]
+  := by simpa [nth_generate, abs_data_eq_nth_f₀, expand_gtr]
 
-lemma nth_generate_f {α : Type} {g : fgrid₀ α} {n} (H : n < length ℘ g) :
+lemma nth_generate_f₀ {α : Type} {g : fgrid₀ α} {n} (H : n < length ℘ g) :
   nth (℘ g) n =
   g.data
     ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
-  := by simp [nth_le_nth H, some_nth_le_generate_f]
+  := by simp [nth_le_nth H, some_nth_le_generate_f₀]
 
-lemma nth_le_generate_f {α : Type} {g : fgrid₀ α} {n} (H) :
+lemma nth_le_generate_f₀ {α : Type} {g : fgrid₀ α} {n} (H) :
   nth_le (℘ g) n H =
   g.data
     ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
-  := by simpa [nth_generate, abs_data_eq_nth_f, expand_gtr]
+  := by simpa [nth_generate, abs_data_eq_nth_f₀, expand_gtr]
 
 lemma generate_eq_data {α : Type} (g : vec_grid₀ α) :
   ℘ g = g.data.to_list :=
@@ -1233,13 +1233,13 @@ begin
   rename hi₁_1 hi,
   rcases g with ⟨⟨r, c, h, ⟨data, hd⟩⟩, o⟩,
   simp [-sub_eq_add_neg, rows, cols] at *,
-  rw [nth_le_nth (by simpa [length_generate_eq_sizes]), some_nth_le_generate_a],
+  rw [nth_le_nth (by simpa [length_generate_eq_sizes]), some_nth_le_generate_v₀],
   rw nth_le_nth hi₂, simp,
   have : |↑i % ↑c| + |↑i / ↑c| * c = i, from mod_add_div_coe,
   repeat { rw ← nth_le_nth }, simp [this]
 end
 
-private theorem generate_inj_a_a {α : Type} {g₁ g₂ : vec_grid₀ α}
+private theorem generate_inj_v₀_v₀ {α : Type} {g₁ g₂ : vec_grid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o)
@@ -1253,13 +1253,13 @@ begin
   congr, exact vector.to_list_inj h
 end
 
-theorem grid_eq_iff_a_a {α : Type} {g₁ g₂ : vec_grid₀ α}
+theorem grid_eq_iff_v₀_v₀ {α : Type} {g₁ g₂ : vec_grid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : g₁ = g₂ ↔ ℘ g₁ = ℘ g₂ :=
-  ⟨λh, h ▸ rfl, generate_inj_a_a hrows hcols horig⟩
+  ⟨λh, h ▸ rfl, generate_inj_v₀_v₀ hrows hcols horig⟩
 
-private theorem generate_inj_f_f {α : Type} {g₁ g₂ : fgrid₀ α}
+private theorem generate_inj_f₀_f₀ {α : Type} {g₁ g₂ : fgrid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o)
@@ -1303,7 +1303,7 @@ begin
       {r := g₁r, c := g₁c, h := g₂h, o := g₁o, data := g₂d} : fgrid₀ α
     )) i (hl₂.symm ▸ i_bounded), { rw h, intro, refl },
   specialize h₁ (hl₁.symm ▸ i_bounded),
-  simp [-sub_eq_add_neg, nth_le_generate_f] at h₁,
+  simp [-sub_eq_add_neg, nth_le_generate_f₀] at h₁,
   have : g₁o.y + (↑|y - g₁o.x| + ↑|x - g₁o.y| * ↑g₁c) / ↑g₁c = x,
     {
       repeat { rw nat_abs_of_nonneg; try { assumption } },
@@ -1322,11 +1322,11 @@ begin
   exact h₁
 end
 
-theorem grid_eq_iff_f_f {α : Type} {g₁ g₂ : fgrid₀ α}
+theorem grid_eq_iff_f₀_f₀ {α : Type} {g₁ g₂ : fgrid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : g₁ = g₂ ↔ ℘ g₁ = ℘ g₂ :=
-  ⟨λh, h ▸ rfl, generate_inj_f_f hrows hcols horig⟩
+  ⟨λh, h ▸ rfl, generate_inj_f₀_f₀ hrows hcols horig⟩
 
 def row (n : fin (rows g)) :
   (fin (cols g)) → carrier α :=
@@ -1456,8 +1456,8 @@ def count_grid {α : Type} [grid α] [decidable_eq (carrier α)]
   (g : α) (x : carrier α) := list.count x (℘ g)
 
 lemma gen_aof_eq_gen {α : Type} {g : fgrid₀ α} :
-  ℘ (vecgrid_of_fgrid g) = @generate _ ag_fgrid₀ g :=
-  by simp [vecgrid_of_fgrid, generate_eq_data]
+  ℘ (vec_grid₀_of_fgrid₀ g) = @generate _ ag_fgrid₀ g :=
+  by simp [vec_grid₀_of_fgrid₀, generate_eq_data]
 
 private theorem generate_inj_a_f {α : Type} {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α}
   (hrows : g₁.r = g₂.r)
@@ -1472,32 +1472,32 @@ begin
   dsimp at hrows hcols horig hl₁ hl₂,
   subst hrows, subst hcols, subst horig,
   unfold_coes,
-  simp [vecgrid_of_fgrid, h.symm, generate_eq_data]
+  simp [vec_grid₀_of_fgrid₀, h.symm, generate_eq_data]
 end
 
 lemma gen_foa_eq_gen {α : Type} {g : vec_grid₀ α} :
-  ℘ (fgrid_of_vecgrid g) = @generate (vec_grid₀ α) _ g :=
+  ℘ (fgrid₀_of_vec_grid₀ g) = @generate (vec_grid₀ α) _ g :=
 begin
   have hl₁ : length (℘ g) = rows g * cols g,
     from length_generate _,
-  have hl₂ : length (℘ (fgrid_of_vecgrid g)) = rows g * cols g,
+  have hl₂ : length (℘ (fgrid₀_of_vec_grid₀ g)) = rows g * cols g,
     from length_generate _,
-  simp [fgrid_of_vecgrid, fgrid_of_vecgrid] at *,
+  simp [fgrid₀_of_vec_grid₀] at *,
   apply list.ext_le (hl₂.trans hl₁.symm) (λi hi₁ hi₂, _),
   simp [
-    nth_le_generate_f, nth_generate, abs_data_eq_nth_a', abs_data_eq_nth_f,
+    nth_le_generate_f₀, nth_generate, abs_data_eq_nth_v₀', abs_data_eq_nth_f₀,
     tl, bl, rows, cols, expand_gtr
   ]
 end
 
-private theorem generate_inj_f_a {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid₀ α}
+private theorem generate_inj_f₀_v₀ {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o)
   (h : ℘ g₁ = @generate (fgrid₀ α) _ g₂) : g₁ = g₂ :=
-  generate_inj_f_f hrows hcols horig h
+  generate_inj_f₀_f₀ hrows hcols horig h
 
-theorem grid_eq_iff_a_f
+theorem grid_eq_iff_v₀_f₀
   {α : Type} {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α}
   (h₁ : g₁.r = g₂.r)
   (h₂ : g₁.c = g₂.c)
@@ -1505,68 +1505,68 @@ theorem grid_eq_iff_a_f
   g₁ = g₂ ↔ ℘ g₁ = ℘ g₂ :=
   ⟨λh, h ▸ rfl, λh, generate_inj_a_f h₁ h₂ h₃ $ by rwa gen_aof_eq_gen.symm⟩ 
 
-theorem grid_eq_iff_f_a
+theorem grid_eq_iff_f₀_v₀
   {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid₀ α}
   (h₁ : g₁.r = g₂.r)
   (h₂ : g₁.c = g₂.c)
   (h₃ : g₁.o = g₂.o) :
   g₁ = g₂ ↔ ℘ g₁ = ℘ g₂ :=
-    ⟨λh, h ▸ rfl, λh, generate_inj_f_a h₁ h₂ h₃ h⟩ 
+    ⟨λh, h ▸ rfl, λh, generate_inj_f₀_v₀ h₁ h₂ h₃ h⟩ 
 
 attribute [extensionality]
-theorem grid_eq_ext_a_a {α : Type} {g₁ g₂ : vec_grid₀ α}
+theorem grid_eq_ext_v₀_v₀ {α : Type} {g₁ g₂ : vec_grid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : ℘ g₁ = ℘ g₂ → g₁ = g₂ :=
-  (grid_eq_iff_a_a hrows hcols horig).2
+  (grid_eq_iff_v₀_v₀ hrows hcols horig).2
 
 attribute [extensionality]
-theorem grid_eq_ext_f_f {α : Type} {g₁ g₂ : fgrid₀ α}
+theorem grid_eq_ext_f₀_f₀ {α : Type} {g₁ g₂ : fgrid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : ℘ g₁ = ℘ g₂ → g₁ = g₂ :=
-  (grid_eq_iff_f_f hrows hcols horig).2
+  (grid_eq_iff_f₀_f₀ hrows hcols horig).2
 
 attribute [extensionality]
-theorem grid_eq_ext_a_f {α : Type} {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α}
+theorem grid_eq_ext_v₀_f₀ {α : Type} {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : ℘ g₁ = ℘ g₂ → g₁ = g₂ :=
-  (grid_eq_iff_a_f hrows hcols horig).2
+  (grid_eq_iff_v₀_f₀ hrows hcols horig).2
 
 attribute [extensionality]
-theorem grid_eq_ext_f_a {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid₀ α}
+theorem grid_eq_ext_f₀_v₀ {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid₀ α}
   (hrows : g₁.r = g₂.r)
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : ℘ g₁ = ℘ g₂ → g₁ = g₂ :=
-  (grid_eq_iff_f_a hrows hcols horig).2
+  (grid_eq_iff_f₀_v₀ hrows hcols horig).2
 
 lemma nth_vecgrid_of_fgrid {α : Type} {g : fgrid₀ α} {n} :
-  list.nth (vecgrid_of_fgrid g).data.val n = list.nth (℘ g) n :=
-  by delta vecgrid_of_fgrid; simp
+  list.nth (vec_grid₀_of_fgrid₀ g).data.val n = list.nth (℘ g) n :=
+  by delta vec_grid₀_of_fgrid₀; simp
 
-instance decidable_eq_a_a {α : Type} [decidable_eq α]
+instance decidable_eq_v₀_v₀ {α : Type} [decidable_eq α]
   : decidable_eq (vec_grid₀ α) :=
   λg₁ g₂, if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-            by simp [grid_eq_iff_a_a, *]; apply_instance
+            by simp [grid_eq_iff_v₀_v₀, *]; apply_instance
           else is_false $ by finish
 
-instance decidable_eq_f_f {α : Type} [decidable_eq α]
+instance decidable_eq_f₀_f₀ {α : Type} [decidable_eq α]
   : decidable_eq (fgrid₀ α) :=
   λg₁ g₂, if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-            by simp [grid_eq_iff_f_f, *]; apply_instance
+            by simp [grid_eq_iff_f₀_f₀, *]; apply_instance
           else is_false $ by finish
 
-instance decidable_eq_a_f {α : Type} [decidable_eq α]
+instance decidable_eq_v₀_f₀ {α : Type} [decidable_eq α]
   {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α} : decidable (g₁ = g₂) :=
   if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-    by simp [grid_eq_iff_a_f, *]; apply_instance    
+    by simp [grid_eq_iff_v₀_f₀, *]; apply_instance    
   else is_false $ by finish
 
-instance decidable_eq_f_a {α : Type} [decidable_eq α]
+instance decidable_eq_f₀_v₀ {α : Type} [decidable_eq α]
   {g₁ : fgrid₀ α} {g₂ : vec_grid₀ α} : decidable (g₁ = g₂) :=
   if h : g₁.r = g₂.r ∧ g₁.c = g₂.c ∧ g₁.o = g₂.o then
-    by simp [grid_eq_iff_f_a, *]; apply_instance
+    by simp [grid_eq_iff_f₀_v₀, *]; apply_instance
   else is_false $ by finish
 
 lemma subgrid_self {α : Type} {g : vec_grid₀ α} {bb : bounding_box}
@@ -1576,7 +1576,7 @@ lemma subgrid_self {α : Type} {g : vec_grid₀ α} {bb : bounding_box}
 begin
   rcases g with ⟨⟨r, c, h, ⟨d, hd⟩⟩, o⟩,
   simp [h, subgrid], unfold_coes,
-  rw grid_eq_iff_f_f;
+  rw grid_eq_iff_f₀_f₀;
     try { simp [cols_of_box, bl, expand_gtr, cols] };
     try { simp [z_of_bounded] };
     try { simp [rows_of_box, bl, expand_gtr, rows] },
@@ -1590,7 +1590,7 @@ begin
     },
     {
       intros,
-      rw nth_le_generate_f, 
+      rw nth_le_generate_f₀, 
       simp only [
         nth_generate, abs_data, data, expand_gtr, bl, (∘),
         relpoint_of_gpoint, prod_of_rel_point, rows, cols, tl,
@@ -1599,7 +1599,7 @@ begin
     }
 end
 
-lemma p_in_g_iff_a_f {α : Type} {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α} {p}
+lemma p_in_g_iff_v₀_f₀ {α : Type} {g₁ : vec_grid₀ α} {g₂ : fgrid₀ α} {p}
                      (h₁ : g₁.r = g₂.r)
                      (h₂ : g₁.c = g₂.c)
                      (h₃ : g₁.o = g₂.o) : p ∈ g₁ ↔ p ∈ g₂ :=
