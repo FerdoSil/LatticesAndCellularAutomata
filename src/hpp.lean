@@ -159,19 +159,20 @@ def mk_hpp (g : vec_grid₀ cellT) : hpp :=
   ⟨g, X, cautomatons.neumann, (λ_ neigh, translation neigh), cautomatons.ext_one⟩
 
 def hpp_g :=
-  vec_grid₀.mk ⟨11, 11, dec_trivial,
-	          ⟨[X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, WE, X, X, X, S, X,
-              E, X, X, X, E, X, W, X, X, N, N,
-              X, X, X, X, X, N, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X,
-              X, X, X, X, X, X, X, X, X, X, X], rfl⟩⟩
-						⟨0, 0⟩ 
+  vec_grid₀.mk
+    ⟨11, 11, dec_trivial,
+    ⟨[X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, WE, X, X, X, S, X,
+      E, X, X, X, E, X, W, X, X, N, N,
+      X, X, X, X, X, N, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X,
+      X, X, X, X, X, X, X, X, X, X, X], rfl⟩⟩
+    ⟨0, 0⟩ 
 
 def simple := mk_hpp hpp_g
 

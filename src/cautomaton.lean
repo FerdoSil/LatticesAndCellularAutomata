@@ -196,10 +196,8 @@ end
 def canonical_grid :=
   compute_bounds a = ⟨gbl a.g, gtr a.g, grid_is_bounding_box⟩
 
-def make_canonical :=
-  cautomaton.mk
-    ↑(subgrid a.g (compute_bounds a) (compute_bounds_pres_overlaid _))
-    a.empty a.neigh a.f a.ext
+def make_canonical : cautomaton α :=
+  {a with g := ↑(subgrid a.g (compute_bounds a) (compute_bounds_pres_overlaid _))}
 
 def is_canonical := make_canonical a = a
 

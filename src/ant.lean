@@ -29,10 +29,9 @@ instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
 
 instance cellT_deceq : decidable_eq cellT :=
-	λl r,
-		begin
-			cases l; cases r; try {exact is_true rfl}; apply is_false; trivial
-		end
+	λl r, begin
+			    cases l; cases r; try {exact is_true rfl}; apply is_false; trivial
+		    end
 
 attribute [reducible]
 def ant := cautomaton cellT

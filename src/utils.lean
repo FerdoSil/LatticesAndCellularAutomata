@@ -133,11 +133,8 @@ instance is_bounded_dec (a b y : α) : decidable (is_bounded a b y) :=
 def make_bounded {a b : α} {x : α} (h : is_bounded a b x) : bounded a b :=
   ⟨x, h⟩
 
-def z_of_bounded {a b : α} (b : bounded a b) :=
-  match b with ⟨z, _⟩ := z end
-
 def bounded_to_str [φ : has_to_string α] {a b : α} :
-  bounded a b → string := to_string ∘ z_of_bounded
+  bounded a b → string := λx, to_string x.1
 
 instance bounded_repr {a b : α} [has_to_string α] :
   has_repr (bounded a b) := ⟨bounded_to_str⟩
@@ -146,22 +143,19 @@ instance bounded_str (a b : α) [has_to_string α] :
   has_to_string (bounded a b) := ⟨bounded_to_str⟩
 
 instance bounded_to_carrier_coe (a b : α) : has_coe (bounded a b) α :=
-  ⟨z_of_bounded⟩
+  ⟨λx, x.1⟩
 
 instance zbound_dec_eq {a b : α} : decidable_eq (bounded a b)
   | ⟨x, _⟩ ⟨y, _⟩ := by apply_instance
 
 instance coe_bounded {α : Type} {a b : α} [decidable_linear_order α] :
-  has_coe (@bounded α _ a b) α := ⟨z_of_bounded⟩
-
-lemma coe_is_z_of_bounded {α : Type} {a b : α} [decidable_linear_order α]
-  (x : bounded a b) : z_of_bounded x = ↑x := rfl
+  has_coe (@bounded α _ a b) α := ⟨λx, x.1⟩
 
 lemma positive_bounded {x : ℕ} (a : bounded 0 x) : ↑a ≥ 0 :=
-let ⟨a, ⟨l, r⟩⟩ := a in by rw ← coe_is_z_of_bounded; simpa [z_of_bounded]
+let ⟨a, ⟨l, r⟩⟩ := a in by simpa [z_of_bounded]
 
 lemma bounded_lt {x : ℕ} (a : bounded 0 x) : ↑a < x :=
-let ⟨a, ⟨l, r⟩⟩ := a in by rw ← coe_is_z_of_bounded; simpa [z_of_bounded]
+let ⟨a, ⟨l, r⟩⟩ := a in by simpa [z_of_bounded]
 
 end bounded
 
@@ -277,7 +271,7 @@ private lemma abs_nat_lt : ∀{n m : ℤ}, (0 ≤ n) → n < m → nat_abs n < n
         exact lt_of_add_lt_add_right nltm
       }
     }
-    -- This proof breaks beta reduction further down the line.
+    -- This proof breaks beta reduction further down the line, ouch.
     -- rw ← int.coe_nat_lt_coe_nat_iff,
     -- have : of_nat n₂ ≥ (0 : ℤ), linarith,
     -- repeat { rw int.nat_abs_of_nonneg }; assumption
@@ -300,11 +294,10 @@ def range_weaken {a b : ℤ} (h : bounded (a + 1) b) : bounded a b
        (le_of_zero_le_add_le _ 1 _ dec_trivial (le_refl _)) h
 
 lemma range_weaken_n {a b : ℤ} {c : bounded (a + 1) b} :
-  z_of_bounded c = z_of_bounded (range_weaken c) :=
+  c.1 = (range_weaken c).1 :=
 begin
   cases c with c p,
   unfold range_weaken, delta range_weaken_lower_any, simp,
-  simp [z_of_bounded],
   cases p, dsimp, finish
 end
 
@@ -428,7 +421,7 @@ lemma range_pure_singleton {x} : range_pure x (x + 1) = [x] :=
 lemma in_range_iff {a b} {x} : x ∈ range_pure a b ↔ is_bounded a b x :=
   ⟨range_pure_bounded, in_range_pure_of_bounded⟩
 
-def range_pure_m (a b : ℤ) : list ℤ := map z_of_bounded (range a b)
+def range_pure_m (a b : ℤ) : list ℤ := map (λx : bounded a b, x.1) (range a b)
 
 lemma range_empty_iff {a b : ℤ} : range a b = [] ↔ (b ≤ a) :=
 begin

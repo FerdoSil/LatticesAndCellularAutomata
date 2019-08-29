@@ -627,7 +627,7 @@ lemma gip_g_in_grid {g : α} :
 private def make_bounded_idx {g : α} {p : point} (h : p ∈ (bbox_of_grid g)) :
   bounded (bl g).x (gtr g).x ×
   bounded (gbl g).y (gtr g).y :=
-    (make_bounded h.right, make_bounded h.left)
+    (make_bounded h.2, make_bounded h.1)
 
 private def make_bounded_indices (is : list point)
                          (h : ∀p, p ∈ is → p ∈ (bbox_of_grid g)) :
@@ -716,7 +716,7 @@ notation `℘` g:max := generate g
 section grid_instances
 
 instance grid_functor : functor vec_grid := {
-  map := λα β f g, ⟨g.r, g.c, g.h, vector.map f g.data⟩
+  map := λα β f g, {g with data := vector.map f g.data}
 }
 
 instance grid_functor_law : is_lawful_functor vec_grid := {
@@ -725,7 +725,7 @@ instance grid_functor_law : is_lawful_functor vec_grid := {
 }
 
 instance agrid_functor : functor vec_grid₀ := {
-  map := λα β f g, ⟨⟨g.r, g.c, g.h, vector.map f g.data⟩, g.o⟩
+  map := λα β f g, {g with data := vector.map f g.data}
 }
 
 instance agrid_functor_law : is_lawful_functor vec_grid₀ := {
@@ -734,7 +734,7 @@ instance agrid_functor_law : is_lawful_functor vec_grid₀ := {
 }
 
 instance fgrid_functor : functor fgrid₀ := {
-  map := λα β f g, ⟨g.r, g.c, g.h, g.o, λx y, f (g.data x y)⟩
+  map := λα β f g, {g with data := λx y, f (g.data x y)}
 }
 
 instance fgrid_functor_law : is_lawful_functor fgrid₀ := {
@@ -891,10 +891,10 @@ lemma dec_grid_len_eq_indices_len :
   by simp [length_generate, length_gip_g]
 
 def vecgrid_of_fgrid {α : Type} (g : fgrid₀ α) : vec_grid₀ α :=
-    ⟨⟨g.r, g.c, g.h, ⟨generate g, length_generate_eq_size _⟩⟩, g.o⟩
+  {g with data := ⟨℘ g, length_generate_eq_size _⟩}
 
 def fgrid_of_vecgrid {α : Type} (g : vec_grid₀ α) : fgrid₀ α :=
-  ⟨g.r, g.c, g.h, g.o, λx y, abs_data g ⟨x, y⟩⟩
+  {g with data := λx y, abs_data g ⟨x, y⟩}
 
 instance f_a_coe {α : Type} : has_coe (fgrid₀ α) (vec_grid₀ α) := ⟨vecgrid_of_fgrid⟩
 instance a_f_coe {α : Type} : has_coe (vec_grid₀ α) (fgrid₀ α) := ⟨fgrid_of_vecgrid⟩
@@ -1109,8 +1109,7 @@ begin
   simp [
     nth_le_nth this, inject_into_bounded, make_bounded_idx, make_bounded,
     nth_le_gip_g, grid_point_of_prod, data_option
-  ],
-  repeat { rw dif_pos }
+  ]
 end
 
 theorem nth_generate' {n} (h : n < length ℘ g) :
@@ -1164,7 +1163,7 @@ lemma abs_data_eq_nth_f {α : Type} {g : fgrid₀ α} {p} :
 begin
   rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
   simp only [
-      abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data
+    abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data
   ],
   unfold_coes, simp only [fin.val, of_nat_eq_coe],
   have h₁ : x - (bl g).y ≥ 0, by linarith,
@@ -1280,7 +1279,7 @@ begin
     by simp [contra] at g₁h; exact absurd g₁h (lt_irrefl _),
   have colsnezero : g₁c ≠ 0, assume contra,
     by simp [contra] at g₂h; exact absurd g₂h (lt_irrefl _),
-  let i := |x -  g₁o.y| * g₁c + |y - g₁o.x|,
+  let i := |x - g₁o.y| * g₁c + |y - g₁o.x|,
   have hi : i = |x - g₁o.y| * g₁c + |y - g₁o.x|, refl,
   have r_nonneg : x - g₁o.y ≥ 0,
     by simp only [ge_from_le, le_sub_iff_add_le, zero_add]; exact xl,

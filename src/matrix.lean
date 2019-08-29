@@ -98,7 +98,7 @@ begin
   apply list.ext_le _ _,
     {
       repeat { rw length_generate_eq_size },
-      simp [size, relative_grid.rows, relative_grid.cols]
+      simp [size, rows, cols]
     },
     {
       intros n h₁ h₂, rw nth_le_generate_f,

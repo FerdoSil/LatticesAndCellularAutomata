@@ -40,7 +40,7 @@ def step (cell : cellT) (alive_neighbours : ℕ) : cellT :=
     else D
 
 def gol_step (cell : cellT) (neigh : list cellT) :=
-  step cell (count_at_single neigh tt)
+  step cell (count_at_single neigh A)
 
 end gol
 

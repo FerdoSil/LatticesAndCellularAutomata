@@ -114,7 +114,7 @@ structure ww₁ :=
     (ous : list inout)
 
 def str_of_ww₁ : ww₁ → string
-    | ⟨aut, _, _⟩ := to_string aut
+  | ⟨aut, _, _⟩ := to_string aut
 
 instance ww₁_to_str : has_to_string ww₁ := ⟨str_of_ww₁⟩
 
