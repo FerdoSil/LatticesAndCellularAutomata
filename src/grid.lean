@@ -1578,7 +1578,7 @@ begin
   simp [h, subgrid], unfold_coes,
   rw grid_eq_iff_f₀_f₀;
     try { simp [cols_of_box, bl, expand_gtr, cols] };
-    try { simp [z_of_bounded] };
+    try { simp };
     try { simp [rows_of_box, bl, expand_gtr, rows] },
   rw gen_foa_eq_gen,
   apply ext_le,

@@ -152,10 +152,10 @@ instance coe_bounded {α : Type} {a b : α} [decidable_linear_order α] :
   has_coe (@bounded α _ a b) α := ⟨λx, x.1⟩
 
 lemma positive_bounded {x : ℕ} (a : bounded 0 x) : ↑a ≥ 0 :=
-let ⟨a, ⟨l, r⟩⟩ := a in by simpa [z_of_bounded]
+let ⟨a, ⟨l, r⟩⟩ := a in by simpa
 
 lemma bounded_lt {x : ℕ} (a : bounded 0 x) : ↑a < x :=
-let ⟨a, ⟨l, r⟩⟩ := a in by simpa [z_of_bounded]
+let ⟨a, ⟨l, r⟩⟩ := a in by simpa
 
 end bounded
 
