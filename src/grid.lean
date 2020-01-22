@@ -174,8 +174,8 @@ instance : has_repr (relative_point g) :=
   ⟨relative_point_str g⟩ 
 
 structure grid_point (g : α) :=
-  (x : bounded (bl g).y (gtr g).y)
-  (y : bounded (bl g).x (gtr g).x)
+  (y : bounded (bl g).y (gtr g).y)
+  (x : bounded (bl g).x (gtr g).x)
 
 def grid_point_str (g : α) : grid_point g → string
   | ⟨x, y⟩ := "[" ++ to_string x ++ ", " ++ to_string y ++ "] - "
@@ -210,7 +210,7 @@ lemma cols_eq_trx_sub_blx
 
 def relpoint_of_gpoint {g : α} (p : grid_point g) : relative_point g :=
     ⟨
-      ⟨|p.x.1 - (bl g).y|,  
+      ⟨|p.y.1 - (bl g).y|,  
        begin
          rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩, simp,
          have eq₁ : x + -(bl g).y ≥ 0, by linarith,
@@ -222,13 +222,13 @@ def relpoint_of_gpoint {g : α} (p : grid_point g) : relative_point g :=
          linarith
        end
       ⟩,
-      ⟨|p.y.1 - (bl g).x|,
-       have h : p.y.1 - (tl g).x ≥ 0,
-         from le_sub_iff_add_le.2 (by simp [tl, p.y.2.1]),
+      ⟨|p.x.1 - (bl g).x|,
+       have h : p.x.1 - (tl g).x ≥ 0,
+         from le_sub_iff_add_le.2 (by simp [tl, p.x.2.1]),
        ((int.coe_nat_lt_coe_nat_iff _ _).1 $
         (int.nat_abs_of_nonneg h).symm ▸
         begin
-          let uby := p.y.2.2,
+          let uby := p.x.2.2,
           simp only [expand_gtr] at uby,
           simp only [tl],
           linarith
@@ -364,9 +364,9 @@ def grid_point_to_fin {α : Type} [grid α] {g : α}
 
 lemma expand_grid_point_to_fin {α : Type} [grid α] {g : α}
   (p : grid_point g) : grid_point_to_fin p =
-  ⟨|p.x.1 - (bl g).y| * cols g + |p.y.1 - (bl g).x|,
+  ⟨|p.y.1 - (bl g).y| * cols g + |p.x.1 - (bl g).x|,
   linearize_array
-    begin 
+    begin
       rcases p with ⟨_, ⟨y, ⟨_, yu⟩⟩⟩,
       simp only [tl], rw ← int.coe_nat_lt_coe_nat_iff,
       have : y - (grid.bl g).x ≥ 0, by rw [ge_from_le]; linarith,
@@ -421,9 +421,9 @@ instance rg_fgrid₀ {α : Type} :
     rows     := λg, g.r,
     cols     := λg, g.c,
     nonempty := λg, g.h,
-    data     := λg x y,
-      g.data ⟨g.o.y + x, ⟨by simp, absolute_bounds _⟩⟩
-             ⟨g.o.x + y, ⟨by simp, absolute_bounds _⟩⟩
+    data     := λg y x,
+      g.data ⟨g.o.y + y, ⟨by simp, absolute_bounds _⟩⟩
+             ⟨g.o.x + x, ⟨by simp, absolute_bounds _⟩⟩
 }
 
 instance ag_vec_agrid₀ {α : Type} :
@@ -1133,7 +1133,7 @@ lemma abs_data_eq_nth_v₀ {α : Type} {g : vec_grid₀ α} {p} :
 
 lemma abs_data_eq_nth_v₀' {α : Type} {g : vec_grid₀ α} {p} :
   abs_data g p =
-  vector.nth g.data ⟨|p.x.1 - g.o.y| * g.c + |p.y.1 - g.o.x|,
+  vector.nth g.data ⟨|p.y.1 - g.o.y| * g.c + |p.x.1 - g.o.x|,
   begin
     rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
     simp [-sub_eq_add_neg],
@@ -1159,7 +1159,7 @@ lemma abs_data_eq_nth_v₀' {α : Type} {g : vec_grid₀ α} {p} :
      ]
 
 lemma abs_data_eq_nth_f₀ {α : Type} {g : fgrid₀ α} {p} :
-  abs_data g p = g.data p.x p.y :=
+  abs_data g p = g.data p.y p.x :=
 begin
   rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
   simp only [
