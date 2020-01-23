@@ -1,3 +1,12 @@
+-- Formalization of cellular automata defined over two-dimensional orthogonal geometric lattices.
+
+-- The structure 'cautomaton' represents a cellular automaton.
+
+-- The function 'step_n a n' represents the 'n'th generation of the CA 'a'.
+-- The function 'make_canonical' computes the canonical form of an automaton.
+
+-- Most theorems present are properties related to this functionality.
+
 import grid utils data.vector
 
 open utils
@@ -108,7 +117,8 @@ private lemma pres_nonempty {α β : Type} {f} {filtered : list (α × β)}
   ¬empty_list l :=
   by simp [h₁, map_empty_iff_l_empty, unzip_fst_empty_iff_l_empty, h]
 
-def compute_bounds : bounding_box :=
+def compute_bounds {α : Type} [decidable_eq α]
+                   (a : cautomaton α) : bounding_box :=
   let bounded  := gip_g a.g in
   let mapped   := ℘ a.g in
   let zipped   := zip bounded mapped in

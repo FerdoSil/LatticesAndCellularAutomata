@@ -1,3 +1,5 @@
+-- Formalization of matrices defined over 'grid's.
+
 import grid utils data.vector2 tactic.elide
 
 open utils

@@ -1,3 +1,9 @@
+-- Implementation of Langton's Ant.
+
+-- Cell states 'cellT' are represented as constructors 'color[cardinal]'.
+-- The definition 'mk_ant' builds an instance of Ant CA
+-- from an initial configuration of cell states.
+
 import cautomaton utils
 
 open utils
@@ -6,8 +12,11 @@ namespace la
 
 section la
 
+-- (B)lack / (W)hite + [cardinal direction]
+@[derive decidable_eq]
 inductive cellT | B | W | BN | BE | BS | BW | WN | WE | WS | WW
 
+-- Respective (A)nt cardinal direction or 'A' for none.
 inductive antCardinal | AN | AW | AE | AS | A
 
 open cellT antCardinal
@@ -27,11 +36,6 @@ def cellT_str : cellT → string
 instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
-
-instance cellT_deceq : decidable_eq cellT :=
-	λl r, begin
-			    cases l; cases r; try {exact is_true rfl}; apply is_false; trivial
-		    end
 
 attribute [reducible]
 def ant := cautomaton cellT

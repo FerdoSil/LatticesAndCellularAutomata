@@ -1,3 +1,23 @@
+-- A formalization of two-dimensional orthogonal geometric lattices, simply called 'grid's.
+
+-- The class 'relative_grid' is an abstract interpretation thereof with relative (0, 0)-based indexing.
+-- The class 'grid' is a generalization of 'relative_grid' to arbitrary (x, y)-relative grids.
+
+-- Two concrete instances are available.
+-- 'fgrid' and its absolutely-indexed counterpart 'fgrid₀' represent
+-- a function-based implementation.
+
+-- 'vec_grid' and its absolutely-indexed counterpart 'vec_grid₀' represent
+-- a homogeneous vector-based implementation.
+
+-- The function 'gip_g' enumerates coordinates of a grid.
+-- The function 'generate' turns a grid into a sequence of elements.
+-- The function 'abs_data g ⟨x, y⟩' yields the element of g at ⟨x, y⟩.
+-- The functions 'row' 'col' 'top' 'bot' 'left' 'right' return the respective slices of a grid.
+-- The function 'subgrid' returns a subgrid of a grid.
+
+-- Most theorems present are properties related to this functionality.
+
 import utils
 import data.vector data.list data.int.basic tactic.omega data.fin
        tactic.linarith tactic.sanity_check
@@ -280,6 +300,7 @@ def grid_point_of_prod' {g : α}
        bounded (bl g).x (gtr g).x) : grid_point g :=
   ⟨p.fst, p.snd⟩
 
+-- Cell of 'g' at ⟨x, y⟩ relative to origin.
 def abs_data (g : α) (gp : grid_point g) :=
   let rp := relpoint_of_gpoint gp in
     (data g) rp.x rp.y
@@ -316,15 +337,18 @@ end grids
 
 section grid_impls
 
+-- Vector-based grid concrete instance.
 structure vec_grid (α : Type) :=
   (r : ℕ)
   (c : ℕ)
   (h : r * c > 0)
   (data : vector α (r * c))
 
+-- Absolute vector-based grid concrete instance.
 structure vec_grid₀ (α : Type) extends vec_grid α :=
   (o : point)
 
+-- Absolute function-based grid concrete instance.
 structure fgrid₀ (α : Type) :=
   (r : ℕ)
   (c : ℕ)
@@ -561,7 +585,7 @@ def gip (p₁ p₂ : point) : list point :=
 
 open relative_grid grid
 
-def gip_g := gip (bl g) (gtr g)
+def gip_g {α : Type*} [grid α] (g : α) := gip (bl g) (gtr g)
 
 private lemma expand_gip {p₁ p₂} (h : p₁ ↗ p₂) : 
   gip p₁ p₂ = ⟨p₁.x, p₁.y⟩ :: grp (p₁.x + 1) p₂.x p₁.y
@@ -1398,7 +1422,9 @@ private def bounded_prod_of_point {p : point} {g : α} (h : p ∈ g) :
 
 open bounding_box
 
-def subgrid (bb : bounding_box) (h : overlaid_by bb (bbox_of_grid g)) :
+def subgrid {α : Type*} [grid α] (g : α)
+            (bb : bounding_box)
+            (h : overlaid_by bb (bbox_of_grid g)) :
             fgrid₀ (carrier α) :=
   ⟨rows_of_box bb, cols_of_box bb,
    mul_pos rows_of_box_pos cols_of_box_pos, bb.p₁,

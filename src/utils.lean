@@ -1,3 +1,9 @@
+-- Random assortment of utilities used throughout the project.
+
+-- Integer (modulo) arithmetic properties.
+-- Data structure properties.
+-- Auxiliary algorithms and their poperties.
+
 import data.int.basic data.list data.vector tactic.omega tactic.linarith
 
 namespace utils 

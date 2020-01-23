@@ -1,3 +1,10 @@
+-- Implementation of HPP Lattice Gas CA.
+
+-- Cell states 'cellT' are represented as constructors named as possible combinations of
+-- of the four directly-connected cardinal directions. 'X' is an empty cell.
+-- The definition 'mk_hpp' builds an instance of HPP
+-- from an initial configuration of cell states.
+
 import cautomaton utils data.list.perm
 
 open utils
@@ -6,10 +13,15 @@ namespace hpp
 
 section hpp
 
+-- 'X' is empty
+-- 'N' 'W' 'E' 'S' and their combinations represent presence (or absence) of
+-- a gas molecule heading in the respective direction.
+@[derive decidable_eq]
 inductive cellT | X | N | W | E | S
                 | NW | NE | NS | WS | WE | ES
                 | NWE | NWS | NES | WES | NWSE
 
+-- Cardinal directions of HPP cells.
 inductive cardinal | CN | CW | CE | CS
 
 open cellT cardinal
@@ -35,9 +47,6 @@ def cellT_str : cellT → string
 instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
-
-instance cellT_deceq : decidable_eq cellT :=
-	λl r, by cases l; cases r; try {exact is_true rfl}; apply is_false; trivial
 
 attribute [reducible]
 def hpp := cautomaton cellT

@@ -1,3 +1,13 @@
+-- Implementation of Wireworld.
+
+-- Cell states 'cellT' are represented as follows.
+--   'empty'
+--   'ehead' for electron head
+--   'etail' for electron tail
+--   'condu' for conductor
+-- The definition 'mk_hpp' builds an instance of HPP
+-- from an initial configuration of cell states.
+
 import cautomaton utils data.vector
 open utils
 
@@ -5,6 +15,8 @@ namespace ww
 
 section ww
 
+-- empty | electron head | electron tail | conductor
+@[derive decidable_eq]
 inductive cellT | empty | ehead | etail | condu
 
 open cellT
@@ -18,12 +30,6 @@ def cellT_str : cellT → string
 instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
-
-instance cellT_deceq : decidable_eq cellT :=
-    λl r,
-        begin
-            cases l; cases r; try {exact is_true rfl}; apply is_false; trivial
-        end
 
 attribute [reducible]
 def ww := cautomaton cellT

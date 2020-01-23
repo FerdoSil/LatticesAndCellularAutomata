@@ -1,3 +1,9 @@
+-- Implementation of Game of Life.
+
+-- Cell states 'cellT' are represented as constructors 'A' and 'D' for alive / dead state respecitlvely.
+-- The definition 'mk_gol' builds an instance of Life CA
+-- from an initial configuration of cell states.
+
 import cautomaton utils data.nat.basic 
 
 open utils
@@ -8,6 +14,8 @@ section gol
 
 open list function
 
+-- (A)live / (D)ead
+@[derive decidable_eq]
 inductive cellT | A | D
 
 open cellT
@@ -19,12 +27,6 @@ def cellT_str : cellT → string
 instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
-
-instance cellT_deceq : decidable_eq cellT :=
-	λl r,
-		begin
-			cases l; cases r; try {exact is_true rfl}; apply is_false; trivial
-		end
 
 instance : has_coe cellT bool := ⟨λx, x = A⟩
 
