@@ -106,7 +106,7 @@ begin
       intros n h₁ h₂, rw nth_le_generate_f₀,
       simp [abs_data_eq_nth_v₀', tl, bl, vector.nth_eq_nth_le, vector.to_list],
       rw [← option.some_inj, ← list.nth_le_nth, nth_vecgrid_of_fgrid],
-      have : |↑n % ↑g.c| + g.c * |↑n / ↑g.c| < list.length g.data.val,
+      have : |↑n % ↑g.c| + g.c * |↑n / ↑g.c| < list.length g.contents.val,
         by rw [mul_comm, mod_add_div_coe]; rw generate_eq_data at h₂; exact h₂,
       simp [length_generate_eq_size, size] at h₂,
       have rpos : g.r > 0, from (gt_and_gt_of_mul_gt g.h).1,
