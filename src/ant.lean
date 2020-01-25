@@ -4,7 +4,7 @@
 -- The definition 'mk_ant' builds an instance of Ant CA
 -- from an initial configuration of cell states.
 
-import cautomaton utils
+import cell_automaton utils
 
 open utils
 
@@ -38,7 +38,7 @@ instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
 
 attribute [reducible]
-def ant := cautomaton cellT
+def ant := cell_automaton cellT
 
 def step : cellT → antCardinal → cellT
   | W AS := WS
@@ -80,7 +80,7 @@ def la_step (cell : cellT) (neigh : list cellT) :=
   end end end end
 
 def mk_ant (g : vec_grid₀ cellT) : ant :=
-  ⟨g, W, cautomatons.neumann, la_step, cautomatons.ext_one⟩
+  ⟨g, W, cell_automatons.neumann, la_step, cell_automatons.ext_one⟩
 
 def ant_g :=
   vec_grid₀.mk ⟨11, 11, dec_trivial,

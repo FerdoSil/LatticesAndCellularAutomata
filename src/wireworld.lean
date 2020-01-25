@@ -8,7 +8,7 @@
 -- The definition 'mk_hpp' builds an instance of HPP
 -- from an initial configuration of cell states.
 
-import cautomaton utils data.vector
+import cell_automaton utils data.vector
 open utils
 
 namespace ww
@@ -32,7 +32,7 @@ instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
 
 attribute [reducible]
-def ww := cautomaton cellT
+def ww := cell_automaton cellT
 
 def step : cellT → ℕ → cellT
   | empty _ := empty
@@ -44,7 +44,7 @@ def ww_step (cell : cellT) (neigh : list cellT) :=
       step cell $ count_at_single neigh ehead
 
 def mk_ww (g : vec_grid₀ cellT) : ww :=
-    ⟨g, empty, cautomatons.moore, ww_step, cautomatons.ext_id⟩
+    ⟨g, empty, cell_automatons.moore, ww_step, cell_automatons.ext_id⟩
 
 def wire_g :=
   vec_grid₀.mk ⟨1, 5, dec_trivial,

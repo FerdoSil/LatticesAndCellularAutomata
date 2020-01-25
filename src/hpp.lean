@@ -5,7 +5,7 @@
 -- The definition 'mk_hpp' builds an instance of HPP
 -- from an initial configuration of cell states.
 
-import cautomaton utils data.list.perm
+import cell_automaton utils data.list.perm
 
 open utils
 
@@ -49,7 +49,7 @@ instance cellT_to_str : has_to_string cellT := ⟨cellT_str⟩
 instance cellT_repr : has_repr cellT := ⟨cellT_str⟩
 
 attribute [reducible]
-def hpp := cautomaton cellT
+def hpp := cell_automaton cellT
 
 def has_cardinal : cellT → cardinal → bool
   | N CN := tt
@@ -165,7 +165,7 @@ begin
 end
 
 def mk_hpp (g : vec_grid₀ cellT) : hpp :=
-  ⟨g, X, cautomatons.neumann, (λ_ neigh, translation neigh), cautomatons.ext_one⟩
+  ⟨g, X, cell_automatons.neumann, (λ_ neigh, translation neigh), cell_automatons.ext_one⟩
 
 def hpp_g :=
   vec_grid₀.mk

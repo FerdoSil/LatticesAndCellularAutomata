@@ -4,7 +4,7 @@
 -- The definition 'mk_gol' builds an instance of Life CA
 -- from an initial configuration of cell states.
 
-import cautomaton utils data.nat.basic 
+import cell_automaton utils data.nat.basic 
 
 open utils
 
@@ -49,10 +49,10 @@ end gol
 open cellT
 
 attribute [reducible]
-def gol := cautomaton cellT
+def gol := cell_automaton cellT
 
 def mk_gol (g : vec_grid₀ cellT) : gol :=
-  ⟨g, D, cautomatons.moore, gol_step, cautomatons.ext_one⟩
+  ⟨g, D, cell_automatons.moore, gol_step, cell_automatons.ext_one⟩
 
 def empty := fgrid₀.mk 2 2 dec_trivial ⟨0, 1⟩ (λx y, D)
 
@@ -116,14 +116,14 @@ open list prod
 def find_period (max : ℕ) (a : gol) : option ℕ :=
   let incr_iota := list.reverse $ list.iota max in
   prod.snd <$> list.find ((=tt) ∘ prod.fst) (
-    list.zip (list.map ((=a.g) ∘ cautomaton.g ∘ (step_n a)) incr_iota) incr_iota
+    list.zip (list.map ((=a.g) ∘ cell_automaton.g ∘ (step_n a)) incr_iota) incr_iota
   ) 
 
 meta def solve_periodic_gol_n (n : ℕ) : tactic unit :=
   do {
     `(periodic %%a) ← tactic.target,
     t ← tactic.infer_type a,
-    aut ← tactic.eval_expr (cautomaton _) a,
+    aut ← tactic.eval_expr (cell_automaton _) a,
     let val := find_period n aut in do
       v ← val,
       tactic.existsi `(v),

@@ -31,7 +31,7 @@ class relative_grid (α : Type*) :=
   (rows     : α → ℕ)
   (cols     : α → ℕ)
   (nonempty : Πg, rows g * cols g > 0)
-  (data     : Πg, fin (rows g) → fin (cols g) → carrier)
+  (contents : Πg, fin (rows g) → fin (cols g) → carrier)
 
 class grid (α : Type*) extends relative_grid α :=
   (bl : α → point)
@@ -107,7 +107,7 @@ def cols_of_box (bb : bounding_box) : ℕ :=
 private def data_option (g : α) (x y : ℕ) :=
   if h : y < cols g
   then if h₁ : x < rows g
-       then some $ data g ⟨x, h₁⟩ ⟨y, h⟩
+       then some $ contents g ⟨x, h₁⟩ ⟨y, h⟩
        else none
   else none
 
@@ -121,7 +121,7 @@ variables {α : Type*} [grid α] {g : α}
 
 private theorem data_data_option {x y : ℕ}
   (h₁ : y < rows g) (h₂ : x < cols g) :
-  some (data g ⟨y, h₁⟩ ⟨x, h₂⟩) = data_option g y x :=
+  some (contents g ⟨y, h₁⟩ ⟨x, h₂⟩) = data_option g y x :=
   by unfold data_option; repeat { rw dif_pos; try { simp [is_bounded, h.2] } };
      simpa
 
@@ -303,7 +303,7 @@ def grid_point_of_prod' {g : α}
 -- Cell of 'g' at ⟨x, y⟩ relative to origin.
 def abs_data (g : α) (gp : grid_point g) :=
   let rp := relpoint_of_gpoint gp in
-    (data g) rp.x rp.y
+    (contents g) rp.x rp.y
 
 lemma try_lt_bly : (gbl g).y < (gtr g).y :=
   (grid_bounded_iff.1 grid_is_bounding_box).2
@@ -342,7 +342,7 @@ structure vec_grid (α : Type) :=
   (r : ℕ)
   (c : ℕ)
   (h : r * c > 0)
-  (data : vector α (r * c))
+  (contents : vector α (r * c))
 
 -- Absolute vector-based grid concrete instance.
 structure vec_grid₀ (α : Type) extends vec_grid α :=
@@ -354,7 +354,7 @@ structure fgrid₀ (α : Type) :=
   (c : ℕ)
   (h : r * c > 0)
   (o : point)
-  (data : bounded o.y (o.y + r) → bounded o.x (o.x + c) → α)
+  (contents : bounded o.y (o.y + r) → bounded o.x (o.x + c) → α)
 
 end grid_impls
 
@@ -362,7 +362,7 @@ section grid_instances
 
 open relative_grid grid
 
-lemma data_not_empty {α : Type} {g : vec_grid₀ α} : ¬empty_list g.data.to_list :=
+lemma data_not_empty {α : Type} {g : vec_grid₀ α} : ¬empty_list g.contents.to_list :=
 assume contra,
 begin
   simp [empty_list] at contra,
@@ -413,9 +413,9 @@ instance rg_vec_grid {α : Type} :
     rows     := λg, g.r,
     cols     := λg, g.c,
     nonempty := λg, g.h,
-    data     :=
+    contents :=
     λg y x,
-      g.data.nth ⟨
+      g.contents.nth ⟨
         y.1 * g.c + x.1,
         linearize_array x.2 y.2
       ⟩    
@@ -427,9 +427,9 @@ instance rg_vec_grid₀ {α : Type} :
     rows     := λg, g.r,
     cols     := λg, g.c,
     nonempty := λg, g.h,
-    data     :=
+    contents :=
     λg y x,
-      g.data.nth ⟨
+      g.contents.nth ⟨
         y.1 * g.c + x.1,
         linearize_array x.2 y.2
       ⟩   
@@ -445,8 +445,8 @@ instance rg_fgrid₀ {α : Type} :
     rows     := λg, g.r,
     cols     := λg, g.c,
     nonempty := λg, g.h,
-    data     := λg y x,
-      g.data ⟨g.o.y + y, ⟨by simp, absolute_bounds _⟩⟩
+    contents := λg y x,
+      g.contents ⟨g.o.y + y, ⟨by simp, absolute_bounds _⟩⟩
              ⟨g.o.x + x, ⟨by simp, absolute_bounds _⟩⟩
 }
 
@@ -740,7 +740,7 @@ notation `℘` g:max := generate g
 section grid_instances
 
 instance vec_grid_functor : functor vec_grid := {
-  map := λα β f g, {g with data := vector.map f g.data}
+  map := λα β f g, {g with contents := vector.map f g.contents}
 }
 
 instance vec_grid_functor_law : is_lawful_functor vec_grid := {
@@ -749,7 +749,7 @@ instance vec_grid_functor_law : is_lawful_functor vec_grid := {
 }
 
 instance vec_grid₀_functor : functor vec_grid₀ := {
-  map := λα β f g, {g with data := vector.map f g.data}
+  map := λα β f g, {g with contents := vector.map f g.contents}
 }
 
 instance vec_grid₀_functor_law : is_lawful_functor vec_grid₀ := {
@@ -758,7 +758,7 @@ instance vec_grid₀_functor_law : is_lawful_functor vec_grid₀ := {
 }
 
 instance fgrid₀_functor : functor fgrid₀ := {
-  map := λα β f g, {g with data := λx y, f (g.data x y)}
+  map := λα β f g, {g with contents := λx y, f (g.contents x y)}
 }
 
 instance fgrid₀_functor_law : is_lawful_functor fgrid₀ := {
@@ -904,21 +904,21 @@ lemma length_generate_eq_size :
 
 lemma map_generate_map_v₀ {α β : Type} {g : vec_grid₀ α} {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
-  by simpa [(<$>), generate, abs_data, data, vector.nth_map, (∘)]
+  by simpa [(<$>), generate, abs_data, contents, vector.nth_map, (∘)]
 
 lemma map_generate_map_f₀ {α β : Type} (g : fgrid₀ α) {f : α → β} :
   f <$> (℘ g) = ℘ (f <$> g) :=
-  by simpa [(<$>), generate, abs_data, data]
+  by simpa [(<$>), generate, abs_data, contents]
 
 lemma dec_grid_len_eq_indices_len :
   length (℘ g) = length (gip_g g) :=
   by simp [length_generate, length_gip_g]
 
 def vec_grid₀_of_fgrid₀ {α : Type} (g : fgrid₀ α) : vec_grid₀ α :=
-  {g with data := ⟨℘ g, length_generate_eq_size _⟩}
+  {g with contents := ⟨℘ g, length_generate_eq_size _⟩}
 
 def fgrid₀_of_vec_grid₀ {α : Type} (g : vec_grid₀ α) : fgrid₀ α :=
-  {g with data := λx y, abs_data g ⟨x, y⟩}
+  {g with contents := λx y, abs_data g ⟨x, y⟩}
 
 instance f₀_v₀_coe {α : Type} : has_coe (fgrid₀ α) (vec_grid₀ α) := ⟨vec_grid₀_of_fgrid₀⟩
 instance v₀_f₀_coe {α : Type} : has_coe (vec_grid₀ α) (fgrid₀ α) := ⟨fgrid₀_of_vec_grid₀⟩
@@ -1149,15 +1149,15 @@ theorem nth_generate' {n} (h : n < length ℘ g) :
   ⟩⟩) := by simp [nth_le_nth h, congr_arg, nth_generate]
 
 lemma abs_data_eq_nth_v₀ {α : Type} {g : vec_grid₀ α} {p} :
-  abs_data g p = vector.nth g.data (grid_point_to_fin p) :=
+  abs_data g p = vector.nth g.contents (grid_point_to_fin p) :=
   by simpa [
-       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data,
+       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, contents,
        grid_point_to_fin, rel_point_to_fin
      ]
 
 lemma abs_data_eq_nth_v₀' {α : Type} {g : vec_grid₀ α} {p} :
   abs_data g p =
-  vector.nth g.data ⟨|p.y.1 - g.o.y| * g.c + |p.x.1 - g.o.x|,
+  vector.nth g.contents ⟨|p.y.1 - g.o.y| * g.c + |p.x.1 - g.o.x|,
   begin
     rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
     simp [-sub_eq_add_neg],
@@ -1178,16 +1178,16 @@ lemma abs_data_eq_nth_v₀' {α : Type} {g : vec_grid₀ α} {p} :
     exact linearize_array eq₁ eq₂
   end⟩ :=
   by simp [
-       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data,
+       abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, contents,
        grid_point_to_fin, rel_point_to_fin, bl, rows, cols
      ]
 
 lemma abs_data_eq_nth_f₀ {α : Type} {g : fgrid₀ α} {p} :
-  abs_data g p = g.data p.y p.x :=
+  abs_data g p = g.contents p.y p.x :=
 begin
   rcases p with ⟨⟨x, ⟨xl, xu⟩⟩, ⟨y, ⟨yl, yu⟩⟩⟩,
   simp only [
-    abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, data
+    abs_data, (∘), relpoint_of_gpoint, prod_of_rel_point, contents
   ],
   unfold_coes, simp only [fin.val, of_nat_eq_coe],
   have h₁ : x - (bl g).y ≥ 0, by linarith,
@@ -1199,7 +1199,7 @@ end
 
 lemma some_nth_le_generate_v₀ {α : Type} {g : vec_grid₀ α} {n} (H) :
   some (nth_le (℘ g) n H) =
-  nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c ) :=
+  nth g.contents.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c ) :=
 begin
   rcases g with ⟨⟨r, c, h, ⟨d, hd⟩⟩, o⟩,
   rw [nth_le_nth, nth_generate],
@@ -1211,7 +1211,7 @@ end
 
 lemma nth_generate_v₀ {α : Type} {g : vec_grid₀ α} {n} (H : n < length ℘ g):
   nth (℘ g) n =
-  nth g.data.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c) :=
+  nth g.contents.to_list ( |↑n % ↑g.c| + |↑n / ↑g.c| * g.c) :=
   by simp [nth_le_nth, some_nth_le_generate_v₀, H]
 
 private lemma goy_add_n_div_c_lt_goy_add_r {α : Type} {g : fgrid₀ α} {n : ℕ}
@@ -1224,38 +1224,38 @@ private lemma goy_add_n_div_c_lt_goy_add_r {α : Type} {g : fgrid₀ α} {n : �
 
 lemma some_nth_le_generate_f₀ {α : Type} {g : fgrid₀ α} {n} (H) :
   some (nth_le (℘ g) n H) =
-  g.data
+  g.contents
     ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simpa [nth_generate, abs_data_eq_nth_f₀, expand_gtr]
 
 lemma nth_generate_f₀ {α : Type} {g : fgrid₀ α} {n} (H : n < length ℘ g) :
   nth (℘ g) n =
-  g.data
+  g.contents
     ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simp [nth_le_nth H, some_nth_le_generate_f₀]
 
 lemma nth_le_generate_f₀ {α : Type} {g : fgrid₀ α} {n} (H) :
   nth_le (℘ g) n H =
-  g.data
+  g.contents
     ⟨g.o.y + ↑n / ↑g.c, ⟨by simp, goy_add_n_div_c_lt_goy_add_r H⟩⟩
     ⟨g.o.x + ↑n % ↑g.c, ⟨by simp, by simp; exact mod_lt_of_pos _ coe_cols_pos_f⟩⟩
   := by simpa [nth_generate, abs_data_eq_nth_f₀, expand_gtr]
 
 lemma generate_eq_data {α : Type} (g : vec_grid₀ α) :
-  ℘ g = g.data.to_list :=
+  ℘ g = g.contents.to_list :=
 begin
   have h₁ : length (℘ g) = rows g * cols g,
     from length_generate _,
-  have h₂ : length (g.data.to_list) = rows g * cols g,
+  have h₂ : length (g.contents.to_list) = rows g * cols g,
     by simp [rows, cols],
   apply ext_le (eq.trans h₁ h₂.symm) (λi hi₁ hi₂, _),
   rw h₁ at hi₁, rw h₂ at hi₂,
   have : hi₁ = hi₂, from rfl, subst this, dedup,
   rw ← option.some_inj, repeat { rw ← nth_le_nth },
   rename hi₁_1 hi,
-  rcases g with ⟨⟨r, c, h, ⟨data, hd⟩⟩, o⟩,
+  rcases g with ⟨⟨r, c, h, ⟨contents, hd⟩⟩, o⟩,
   simp [-sub_eq_add_neg, rows, cols] at *,
   rw [nth_le_nth (by simpa [length_generate_eq_sizes]), some_nth_le_generate_v₀],
   rw nth_le_nth hi₂, simp,
@@ -1321,10 +1321,10 @@ begin
     },
   have h₁ : ∀hh,
     list.nth_le (℘ (
-      {r := g₁r, c := g₁c, h := g₁h, o := g₁o, data := g₁d} : fgrid₀ α
+      {r := g₁r, c := g₁c, h := g₁h, o := g₁o, contents := g₁d} : fgrid₀ α
     )) i hh =
     list.nth_le (℘ (
-      {r := g₁r, c := g₁c, h := g₂h, o := g₁o, data := g₂d} : fgrid₀ α
+      {r := g₁r, c := g₁c, h := g₂h, o := g₁o, contents := g₂d} : fgrid₀ α
     )) i (hl₂.symm ▸ i_bounded), { rw h, intro, refl },
   specialize h₁ (hl₁.symm ▸ i_bounded),
   simp [-sub_eq_add_neg, nth_le_generate_f₀] at h₁,
@@ -1354,11 +1354,11 @@ theorem grid_eq_iff_f₀_f₀ {α : Type} {g₁ g₂ : fgrid₀ α}
 
 def row (n : fin (rows g)) :
   (fin (cols g)) → carrier α :=
-  data g n
+  contents g n
 
 def col (n : fin (cols g)) :
   (fin (rows g)) → carrier α :=
-  flip (data g) n
+  flip (contents g) n
 
 def top :=
   row g ⟨
@@ -1472,7 +1472,7 @@ def modify_at {α : Type} (p : point) (x : α) (g : vec_grid₀ α) : vec_grid�
            @grid_point.mk _ _ g
            ⟨p.y, by simp only [(∈)] at h; exact h.left⟩
            ⟨p.x, by simp only [(∈)] at h; exact h.right⟩ in
-    ⟨⟨g.r, g.c, g.h, modify_vec g.data (r * g.c + c) x⟩, g.o⟩
+    ⟨⟨g.r, g.c, g.h, modify_vec g.contents (r * g.c + c) x⟩, g.o⟩
   else g
 
 def modify_many {α : Type} (l : list (point × α)) (g : vec_grid₀ α) : vec_grid₀ α :=
@@ -1568,7 +1568,7 @@ theorem grid_eq_ext_f₀_v₀ {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid�
   (grid_eq_iff_f₀_v₀ hrows hcols horig).2
 
 lemma nth_vecgrid_of_fgrid {α : Type} {g : fgrid₀ α} {n} :
-  list.nth (vec_grid₀_of_fgrid₀ g).data.val n = list.nth (℘ g) n :=
+  list.nth (vec_grid₀_of_fgrid₀ g).contents.val n = list.nth (℘ g) n :=
   by delta vec_grid₀_of_fgrid₀; simp
 
 instance decidable_eq_v₀_v₀ {α : Type} [decidable_eq α]
@@ -1618,7 +1618,7 @@ begin
       intros,
       rw nth_le_generate_f₀, 
       simp only [
-        nth_generate, abs_data, data, expand_gtr, bl, (∘),
+        nth_generate, abs_data, contents, expand_gtr, bl, (∘),
         relpoint_of_gpoint, prod_of_rel_point, rows, cols, tl,
         rows_of_box, cols_of_box
       ], simp

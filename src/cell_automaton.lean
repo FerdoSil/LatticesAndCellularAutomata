@@ -1,6 +1,6 @@
 -- Formalization of cellular automata defined over two-dimensional orthogonal geometric lattices.
 
--- The structure 'cautomaton' represents a cellular automaton.
+-- The structure 'cell_automaton' represents a cellular automaton.
 
 -- The function 'step_n a n' represents the 'n'th generation of the CA 'a'.
 -- The function 'make_canonical' computes the canonical form of an automaton.
@@ -20,44 +20,44 @@ end grid
 
 open grid
 
-section cautomatons
+section cell_automatons
 
-structure cautomaton (α : Type) [decidable_eq α] :=
+structure cell_automaton (α : Type) [decidable_eq α] :=
   (g     : vec_grid₀ α)
   (empty : α)
   (neigh : point → list point)
   (f     : α → list α → α)
   (ext   : bounding_box → bounding_box)
 
-end cautomatons
+end cell_automatons
 
-section cautomaton_instances
+section cell_automaton_instances
 
-variables {α : Type} [decidable_eq α] [has_to_string α] (a : cautomaton α)
+variables {α : Type} [decidable_eq α] [has_to_string α] (a : cell_automaton α)
 
 open grid
 
-def cautomaton_to_str := grid_str a.g
+def cell_automaton_to_str := grid_str a.g
 
-instance : has_to_string (cautomaton α) := ⟨cautomaton_to_str⟩
+instance : has_to_string (cell_automaton α) := ⟨cell_automaton_to_str⟩
 
-instance : has_repr (cautomaton α) := ⟨cautomaton_to_str⟩
+instance : has_repr (cell_automaton α) := ⟨cell_automaton_to_str⟩
 
-end cautomaton_instances
+end cell_automaton_instances
 
-section cautomaton_quot_setoid_eq 
+section cell_automaton_quot_setoid_eq 
 
-variables {α : Type} [decidable_eq α] (a a₁ a₂ a₃ : cautomaton α)
+variables {α : Type} [decidable_eq α] (a a₁ a₂ a₃ : cell_automaton α)
 
-end cautomaton_quot_setoid_eq
+end cell_automaton_quot_setoid_eq
 
-namespace cautomaton
+namespace cell_automaton
 
-end cautomaton
+end cell_automaton
 
-namespace cautomatons
+namespace cell_automatons
 
-open cautomaton grid
+open cell_automaton grid
 
 def neumann : point → list point
   | ⟨x, y⟩ := 
@@ -86,25 +86,25 @@ def ext_one : bounding_box → bounding_box
                                 ⟨(add_lt_add h.1 dec_trivial),
                                  (add_lt_add h.2 dec_trivial)⟩⟩
 
-end cautomatons
+end cell_automatons
 
-section cautomaton_props
+section cell_automaton_props
 
-variables {α : Type} [decidable_eq α] (a : cautomaton α)
+variables {α : Type} [decidable_eq α] (a : cell_automaton α)
 
-end cautomaton_props
+end cell_automaton_props
 
-section cautomaton_ops
+section cell_automaton_ops
 
 open function list prod relative_grid
 
-variables variables {α : Type} [decidable_eq α] (a : cautomaton α)
+variables variables {α : Type} [decidable_eq α] (a : cell_automaton α)
 
 def asize := size a.g
 
 def bbox_of_caut := bbox_of_grid a.g
 
-theorem caut_eq_iff {a₁ a₂ : cautomaton α}
+theorem caut_eq_iff {a₁ a₂ : cell_automaton α}
   (hempty : a₁.empty = a₂.empty)
   (hneigh : a₁.neigh = a₂.neigh)
   (hf : a₁.f = a₂.f)
@@ -118,7 +118,7 @@ private lemma pres_nonempty {α β : Type} {f} {filtered : list (α × β)}
   by simp [h₁, map_empty_iff_l_empty, unzip_fst_empty_iff_l_empty, h]
 
 def compute_bounds {α : Type} [decidable_eq α]
-                   (a : cautomaton α) : bounding_box :=
+                   (a : cell_automaton α) : bounding_box :=
   let bounded  := gip_g a.g in
   let mapped   := ℘ a.g in
   let zipped   := zip bounded mapped in
@@ -206,12 +206,12 @@ end
 def canonical_grid :=
   compute_bounds a = ⟨gbl a.g, gtr a.g, grid_is_bounding_box⟩
 
-def make_canonical : cautomaton α :=
+def make_canonical : cell_automaton α :=
   {a with g := ↑(subgrid a.g (compute_bounds a) (compute_bounds_pres_overlaid _))}
 
 def is_canonical := make_canonical a = a
 
-def aut_eq (a₁ a₂ : cautomaton α) : Prop :=
+def aut_eq (a₁ a₂ : cell_automaton α) : Prop :=
   (band : bool → bool → bool) (℘(make_canonical a₁).g = ℘(make_canonical a₂).g)
   $ (band : bool → bool → bool)
     ((make_canonical a₁).g.r = (make_canonical a₂).g.r)
@@ -222,7 +222,7 @@ infix ` ~ₐ `:100 := aut_eq
 instance decidable_aut_eq {α} [decidable_eq α] {a₁ a₂} :
   decidable (@aut_eq α _ a₁ a₂) := by simp [(~ₐ)]; apply_instance
 
-def ext_aut (a : cautomaton α) : cautomaton α :=
+def ext_aut (a : cell_automaton α) : cell_automaton α :=
   let new_bb := a.ext (grid_bounds a.g) in
   let new_grid :=
     fgrid₀.mk
@@ -242,7 +242,7 @@ def default_if_nex {α : Type*} [grid α] (empty : carrier α)
   then abs_data g (grid_point_of_prod' (in_grid_bounded g p h))
   else empty
 
-def next_gen (a : cautomaton α) : cautomaton α :=
+def next_gen (a : cell_automaton α) : cell_automaton α :=
   let new_grid := (ext_aut a).g in
   let cells := ℘ new_grid in
   let neighs := map a.neigh (gip_g new_grid) in
@@ -302,24 +302,24 @@ def count_at_single {α : Type} [decidable_eq α] (neigh : list α) (valid : α)
   list.sum ∘ map (λc, if c = valid then 1 else 0) $ neigh
 
 def yield_at_if_in_neigh {α : Type} [decidable_eq α]
-  (a : cautomaton α) (p : point) :=
+  (a : cell_automaton α) (p : point) :=
   if p ∈ a.neigh p
   then some $ @default_if_nex (vec_grid₀ α) _ a.empty a.g p
   else none
 
 def yield_at (p : point) : α := @default_if_nex (vec_grid₀ α) _ a.empty a.g p
 
-def mod_at (p : point) (x : α) (a : cautomaton α) : cautomaton α :=
+def mod_at (p : point) (x : α) (a : cell_automaton α) : cell_automaton α :=
   ⟨modify_at p x a.g, a.empty, a.neigh, a.f, a.ext⟩
 
-def mod_many (l : list (point × α)) (a : cautomaton α) : cautomaton α :=
+def mod_many (l : list (point × α)) (a : cell_automaton α) : cell_automaton α :=
   ⟨modify_many l a.g, a.empty, a.neigh, a.f, a.ext⟩
 
-end cautomaton_ops
+end cell_automaton_ops
 
 section counting
 
-variables {α : Type} [decidable_eq α] (a : cautomaton α)
+variables {α : Type} [decidable_eq α] (a : cell_automaton α)
 
 def count (c : α) : ℕ := count_grid a.g c
 
@@ -331,7 +331,7 @@ lemma count_cast_foa (a : vec_grid₀ α) {x} : count_grid ↑a x = count_grid a
 lemma count_cast_aof (a : fgrid₀ α) {x} : count_grid ↑a x = count_grid a x :=
   by unfold_coes; simp [count_grid, gen_aof_eq_gen, gen_foa_eq_gen]
 
-lemma yield_at_nonempty {p} {a : cautomaton α}
+lemma yield_at_nonempty {p} {a : cell_automaton α}
   (h : yield_at a p ≠ a.empty) : p ∈ a.g :=
 begin
   by_contradiction contra,
@@ -346,7 +346,7 @@ namespace cardinals
 
 section cardinals
 
-variables {α : Type} [decidable_eq α] (a : cautomaton α) (p : point)
+variables {α : Type} [decidable_eq α] (a : cell_automaton α) (p : point)
           (neigh : point → list point)
 
 def neigh_with_NW := ∀p : point, point.mk (p.x - 1) (p.y - 1) ∈ neigh p
@@ -365,7 +365,7 @@ def neigh_with_S  := ∀p : point, point.mk p.x       (p.y + 1) ∈ neigh p
 
 def neigh_with_SE := ∀p : point, point.mk (p.x + 1) (p.y + 1) ∈ neigh p
 
-open cautomatons
+open cell_automatons
 
 lemma neumann_N : neigh_with_N neumann :=
   λ⟨x, y⟩, by simp [neumann]
