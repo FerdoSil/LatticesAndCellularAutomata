@@ -4,11 +4,11 @@
 -- The class 'grid' is a generalization of 'relative_grid' to arbitrary (x, y)-relative grids.
 
 -- Two concrete instances are available.
--- 'fgrid' and its absolutely-indexed counterpart 'fgrid₀' represent
--- a function-based implementation.
-
 -- 'vec_grid' and its absolutely-indexed counterpart 'vec_grid₀' represent
 -- a homogeneous vector-based implementation.
+
+-- absolutely-indexed 'fgrid₀' represents
+-- a function-based implementation.
 
 -- The function 'gip_g' enumerates coordinates of a grid.
 -- The function 'generate' turns a grid into a sequence of elements.
