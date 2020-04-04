@@ -3,9 +3,12 @@
 -- The class 'relative_grid' is an abstract interpretation thereof with relative (0, 0)-based indexing.
 -- The class 'grid' is a generalization of 'relative_grid' to arbitrary (x, y)-relative grids.
 
--- Two concrete instances are available.
+-- Three concrete instances are available.
 -- 'vec_grid' and its absolutely-indexed counterpart 'vec_grid₀' represent
 -- a homogeneous vector-based implementation.
+
+-- 'dep_vec_grid₀' is identical to 'vec_grid₀' but uses dependent indices
+-- for its rows and columns
 
 -- absolutely-indexed 'fgrid₀' represents
 -- a function-based implementation.

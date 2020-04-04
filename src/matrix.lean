@@ -9,6 +9,30 @@ namespace matrix
 structure matrix (m n : ℕ) (α : Type) :=
   (g  : dep_vec_grid₀ α m n)
 
+def matrix_of_f {m n} {α} (h : m * n > 0) (f : fin m → fin n → α) : matrix m n α :=
+  ⟨⟨h, ⟨℘(fgrid₀.mk m n h ⟨0, 0⟩
+    (λx y, f 
+      ⟨|x.1|,
+       begin
+         rcases x with ⟨x, ⟨hx₁, hx₂⟩⟩, simp at hx₁ hx₂ ⊢, 
+         rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg hx₁],
+         exact hx₂
+       end⟩
+      ⟨|y.1|,
+       begin
+         rcases y with ⟨y, ⟨hy₁, hy₂⟩⟩, simp at hy₁ hy₂ ⊢, 
+         rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg hy₁],
+         exact hy₂
+       end
+      ⟩)), by simpa [length_generate_eq_size, size]⟩, ⟨0, 0⟩⟩⟩
+
+def matrix_at {m n} {α} (m₁ : matrix m n α) (i : fin m) (j : fin n) : α :=
+  abs_data m₁.1 ⟨⟨i.1,
+    begin
+      rcases m₁ with ⟨⟨h, v, p⟩⟩, simp [grid.bl, expand_gtr, relative_grid.rows],
+      
+    end⟩, ⟨j.1, sorry⟩⟩
+
 section ext
 
 variables {m n : ℕ} {α : Type} {m₁ m₂ : matrix m n α}
