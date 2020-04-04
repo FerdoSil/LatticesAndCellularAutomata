@@ -29,27 +29,27 @@ def matrix_of_f {m n} {α} (h : m * n > 0) (f : fin m → fin n → α) : matrix
       ⟩)), by simpa [length_generate_eq_size, size]⟩⟩⟩
 
 private lemma matrix_at_ {m n} {α} (m₁ : matrix m n α) (i : fin m) :
-  (grid.bl (vec_grid₀_of_dep_vec_grid (m₁.g))).y ≤ ↑(i.val) ∧
-  ↑(i.val) < (gtr (vec_grid₀_of_dep_vec_grid (m₁.g))).y :=
+  (grid.bl (vec_grid_of_dep_vec_grid (m₁.g))).y ≤ ↑(i.val) ∧
+  ↑(i.val) < (gtr (vec_grid_of_dep_vec_grid (m₁.g))).y :=
 begin
   rcases m₁ with ⟨⟨h, ⟨d, hd⟩⟩⟩,
-  simp [grid.bl, expand_gtr, relative_grid.rows, vec_grid₀_of_dep_vec_grid],
+  simp [grid.bl, expand_gtr, relative_grid.rows, vec_grid_of_dep_vec_grid],
   norm_cast,
   exact ⟨zero_le _, i.2⟩
 end
 
 private lemma matrix_at_ {m n} {α} (m₁ : matrix m n α) (j : fin n) :
-  (grid.bl (vec_grid₀_of_dep_vec_grid (m₁.g))).x ≤ ↑(j.val) ∧
-  ↑(j.val) < (gtr (vec_grid₀_of_dep_vec_grid (m₁.g))).x :=
+  (grid.bl (vec_grid_of_dep_vec_grid (m₁.g))).x ≤ ↑(j.val) ∧
+  ↑(j.val) < (gtr (vec_grid_of_dep_vec_grid (m₁.g))).x :=
 begin
   rcases m₁ with ⟨⟨h, ⟨d, hd⟩⟩⟩,
-  simp [grid.bl, expand_gtr, relative_grid.rows, vec_grid₀_of_dep_vec_grid],
+  simp [grid.bl, expand_gtr, relative_grid.rows, vec_grid_of_dep_vec_grid],
   norm_cast,
   exact ⟨zero_le _, j.2⟩
 end
 
 def matrix_at {m n} {α} (m₁ : matrix m n α) (i : fin m) (j : fin n) : α :=
-  abs_data (vec_grid₀_of_dep_vec_grid m₁.1)
+  abs_data (vec_grid_of_dep_vec_grid m₁.1)
     ⟨⟨i.1, matrix_at_ m₁ i⟩, ⟨j.1, matrix_at_ m₁ j⟩⟩
 
 @[simp]
@@ -58,7 +58,7 @@ lemma matrix_get_mk {α} {m n} (h : m * n > 0)
   matrix_at (matrix_of_f h f) i j = f i j :=
 begin
   simp [matrix_of_f, matrix_at], unfold_projs,
-  delta vec_grid₀_of_dep_vec_grid, unfold_projs,
+  delta vec_grid_of_dep_vec_grid, unfold_projs,
   rw abs_data_eq_nth_v₀, unfold_projs,
   simp [
     vector.nth, nth_generate, grid.bl, relative_grid.cols,
@@ -106,24 +106,24 @@ lemma m_ext {m₁ m₂ : matrix m n α}
   (h : ∀i j, matrix_at m₁ i j = matrix_at m₂ i j) : m₁ = m₂ :=
 begin
   let m₁' := @matrix_of_f m n _ m₁.1.1
-    (λx y, abs_data (vec_grid₀_of_dep_vec_grid m₁.1) ⟨⟨x.1, ⟨_, _⟩⟩, ⟨y.1, ⟨_, _⟩⟩⟩),
+    (λx y, abs_data (vec_grid_of_dep_vec_grid m₁.1) ⟨⟨x.1, ⟨_, _⟩⟩, ⟨y.1, ⟨_, _⟩⟩⟩),
   let m₂' := @matrix_of_f m n _ m₂.1.1
-    (λx y, abs_data (vec_grid₀_of_dep_vec_grid m₂.1) ⟨⟨x.1, ⟨_, _⟩⟩, ⟨y.1, ⟨_, _⟩⟩⟩),
-  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+    (λx y, abs_data (vec_grid_of_dep_vec_grid m₂.1) ⟨⟨x.1, ⟨_, _⟩⟩, ⟨y.1, ⟨_, _⟩⟩⟩),
+  swap 2, { simp [vec_grid_of_dep_vec_grid] },
   swap 2, {
-    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.rows, x.2]
+    simp [vec_grid_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.rows, x.2]
   },
-  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, { simp [vec_grid_of_dep_vec_grid] },
   swap 2, {
-    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.cols, y.2]
+    simp [vec_grid_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.cols, y.2]
   },
-  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, { simp [vec_grid_of_dep_vec_grid] },
   swap 2, {
-    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.rows, x.2]
+    simp [vec_grid_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.rows, x.2]
   },
-  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, { simp [vec_grid_of_dep_vec_grid] },
   swap 2, {
-    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.cols, y.2]
+    simp [vec_grid_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.cols, y.2]
   },
   have heq₁ : m₁ = m₁',
     {
@@ -140,9 +140,9 @@ begin
           intros k h₁ h₂, rw nth_generate,
           simp [
             abs_data, relative_grid.cols, relpoint_of_gpoint, relative_grid.contents,
-            grid.bl, vec_grid₀_of_dep_vec_grid
+            grid.bl, vec_grid_of_dep_vec_grid
           ],
-          delta vec_grid₀_of_dep_vec_grid, simp [vector.nth],
+          delta vec_grid_of_dep_vec_grid, simp [vector.nth],
           congr, norm_cast, unfold_coes, simp [fin.val],
           rw [
             ← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add,
@@ -169,9 +169,9 @@ begin
           intros k h₁ h₂, rw nth_generate,
           simp [
             abs_data, relative_grid.cols, relpoint_of_gpoint, relative_grid.contents,
-            grid.bl, vec_grid₀_of_dep_vec_grid
+            grid.bl, vec_grid_of_dep_vec_grid
           ],
-          delta vec_grid₀_of_dep_vec_grid, simp [vector.nth],
+          delta vec_grid_of_dep_vec_grid, simp [vector.nth],
           congr, norm_cast, unfold_coes, simp [fin.val],
           rw [
             ← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add,
@@ -184,7 +184,7 @@ begin
     },
   rw heq₂ at h,
   simp [m₁', m₂'] at h,
-  delta vec_grid₀_of_dep_vec_grid at h,
+  delta vec_grid_of_dep_vec_grid at h,
   rcases m₁ with ⟨⟨h₁, ⟨d₁, hd₁⟩⟩⟩, rcases m₂ with ⟨⟨h₂, ⟨d₂, hd₂⟩⟩⟩, simp at *,
   simp [
     abs_data, relpoint_of_gpoint, relative_grid.contents, grid.bl, expand_gtr,
@@ -228,7 +228,7 @@ open relative_grid grid
 lemma matrix_nonempty {m₁ : matrix m n α} : m * n > 0 := m₁.1.1
 
 def matrix_string [has_to_string α] (m : matrix m n α) :=
-  grid_str (vec_grid₀_of_dep_vec_grid m.g)
+  grid_str (vec_grid_of_dep_vec_grid m.g)
 
 instance matrix_repr [has_to_string α] : has_repr (matrix m n α) :=
   ⟨matrix_string⟩

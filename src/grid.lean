@@ -960,7 +960,7 @@ def fgrid₀_of_vec_grid₀ {α : Type} (g : vec_grid₀ α) : fgrid₀ α :=
 def dep_vec_grid₀_of_fgrid₀ {α : Type} (g : fgrid₀ α) : dep_vec_grid α g.r g.c :=
   {g with contents := ⟨℘ g, length_generate_eq_size _⟩}
 
-def vec_grid₀_of_dep_vec_grid {m n} {α : Type} (g : dep_vec_grid α m n) : vec_grid₀ α :=
+def vec_grid_of_dep_vec_grid {m n} {α : Type} (g : dep_vec_grid α m n) : vec_grid₀ α :=
   ⟨⟨m, n, g.1, g.2⟩, ⟨0, 0⟩⟩
 
 instance f₀_v₀_coe {α : Type} : has_coe (fgrid₀ α) (vec_grid₀ α) := ⟨vec_grid₀_of_fgrid₀⟩
@@ -977,10 +977,6 @@ lemma vec_grid₀_of_fgrid₀_c {α : Type} {g : fgrid₀ α} :
 attribute [simp]
 lemma vec_grid₀_of_fgrid₀_o {α : Type} {g : fgrid₀ α} :
   (vec_grid₀_of_fgrid₀ g).o = g.o := by simp [vec_grid₀_of_fgrid₀]
-
--- attribute [simp]
--- lemma dep_vec_grid₀_of_fgrid₀_o {α : Type} {g : fgrid₀ α} :
---   (dep_vec_grid₀_of_fgrid₀ g).o = g.o := by simp [dep_vec_grid₀_of_fgrid₀]
 
 attribute [simp]
 lemma fgrid₀_of_vec_grid₀_r {α : Type} {g : vec_grid₀ α} :
