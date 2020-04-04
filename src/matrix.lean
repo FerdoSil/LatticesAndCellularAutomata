@@ -7,31 +7,90 @@ open utils
 namespace matrix
 
 structure matrix (m n : ℕ) (α : Type) :=
-  (g  : dep_vec_grid₀ α m n)
+  (g  : dep_vec_grid α m n)
+
+private lemma matrix_of_f_ {x : ℤ} {m} (h : x < ↑m) (h₁ : 0 ≤ x) : |x| < m :=
+  by rwa [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg h₁]
 
 def matrix_of_f {m n} {α} (h : m * n > 0) (f : fin m → fin n → α) : matrix m n α :=
   ⟨⟨h, ⟨℘(fgrid₀.mk m n h ⟨0, 0⟩
     (λx y, f 
       ⟨|x.1|,
-       begin
-         rcases x with ⟨x, ⟨hx₁, hx₂⟩⟩, simp at hx₁ hx₂ ⊢, 
-         rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg hx₁],
-         exact hx₂
-       end⟩
+         begin
+           rcases x with ⟨x, ⟨hx₁, hx₂⟩⟩, simp at hx₁ hx₂ ⊢, 
+           exact matrix_of_f_ hx₂ hx₁
+         end
+       ⟩
       ⟨|y.1|,
-       begin
-         rcases y with ⟨y, ⟨hy₁, hy₂⟩⟩, simp at hy₁ hy₂ ⊢, 
-         rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg hy₁],
-         exact hy₂
-       end
-      ⟩)), by simpa [length_generate_eq_size, size]⟩, ⟨0, 0⟩⟩⟩
+         begin
+           rcases y with ⟨y, ⟨hy₁, hy₂⟩⟩, simp at hy₁ hy₂ ⊢, 
+           exact matrix_of_f_ hy₂ hy₁
+         end
+      ⟩)), by simpa [length_generate_eq_size, size]⟩⟩⟩
+
+private lemma matrix_at_ {m n} {α} (m₁ : matrix m n α) (i : fin m) :
+  (grid.bl (vec_grid₀_of_dep_vec_grid (m₁.g))).y ≤ ↑(i.val) ∧
+  ↑(i.val) < (gtr (vec_grid₀_of_dep_vec_grid (m₁.g))).y :=
+begin
+  rcases m₁ with ⟨⟨h, ⟨d, hd⟩⟩⟩,
+  simp [grid.bl, expand_gtr, relative_grid.rows, vec_grid₀_of_dep_vec_grid],
+  norm_cast,
+  exact ⟨zero_le _, i.2⟩
+end
+
+private lemma matrix_at_ {m n} {α} (m₁ : matrix m n α) (j : fin n) :
+  (grid.bl (vec_grid₀_of_dep_vec_grid (m₁.g))).x ≤ ↑(j.val) ∧
+  ↑(j.val) < (gtr (vec_grid₀_of_dep_vec_grid (m₁.g))).x :=
+begin
+  rcases m₁ with ⟨⟨h, ⟨d, hd⟩⟩⟩,
+  simp [grid.bl, expand_gtr, relative_grid.rows, vec_grid₀_of_dep_vec_grid],
+  norm_cast,
+  exact ⟨zero_le _, j.2⟩
+end
 
 def matrix_at {m n} {α} (m₁ : matrix m n α) (i : fin m) (j : fin n) : α :=
-  abs_data m₁.1 ⟨⟨i.1,
-    begin
-      rcases m₁ with ⟨⟨h, v, p⟩⟩, simp [grid.bl, expand_gtr, relative_grid.rows],
-      
-    end⟩, ⟨j.1, sorry⟩⟩
+  abs_data (vec_grid₀_of_dep_vec_grid m₁.1)
+    ⟨⟨i.1, matrix_at_ m₁ i⟩, ⟨j.1, matrix_at_ m₁ j⟩⟩
+
+@[simp]
+lemma matrix_get_mk {α} {m n} (h : m * n > 0)
+  (f : fin m → fin n → α) (i : fin m) (j : fin n) :
+  matrix_at (matrix_of_f h f) i j = f i j :=
+begin
+  simp [matrix_of_f, matrix_at], unfold_projs,
+  delta vec_grid₀_of_dep_vec_grid, unfold_projs,
+  rw abs_data_eq_nth_v₀, unfold_projs,
+  simp [
+    vector.nth, nth_generate, grid.bl, relative_grid.cols,
+    grid_point_to_fin, rel_point_to_fin, relpoint_of_gpoint,
+    abs_data, relative_grid.contents
+  ],
+  cases i with i hi, cases j with i hj,
+  have intzero_add : ∀x, int.zero + x = x,
+    by intros; simp [int.zero]; rw int.of_nat_eq_coe; ring,
+  congr,
+    {
+      simp, norm_cast,
+      have : ↑i + -int.zero = ↑i, by ring, simp [this, intzero_add],
+      unfold_coes, simp [fin.val],
+      rw [← int.coe_nat_eq_coe_nat_iff, int.coe_nat_div, int.coe_nat_add], simp,
+      have h₁ : int.of_nat i + -int.zero = ↑i, by ring,
+      have : int.of_nat i + -int.zero ≥ (0 : ℤ), by norm_cast,
+      rw int.nat_abs_of_nonneg, swap 2, exact this,
+      have : ↑n ≠ (0 : ℤ), by simp; clear_except h; intros contra; subst contra; linarith,
+      rw int.add_mul_div_right _ _ this,
+      have : ↑i / ↑n = (0 : ℤ), by norm_cast; exact nat.div_eq_of_lt hj, simp [this],
+      ring
+    },
+    {
+      have : -int.zero = int.zero, by refl, simp [this, intzero_add],
+      unfold_coes, simp [fin.val], rw ← int.coe_nat_eq_coe_nat_iff,
+      have : int.of_nat i % int.of_nat n ≥ (0 : ℤ), by norm_cast,
+      rw int.nat_abs_of_nonneg this, repeat { rw int.of_nat_eq_coe },
+      rw [← int.coe_nat_mod, int.coe_nat_eq_coe_nat_iff],
+      exact nat.mod_eq_of_lt hj
+    }
+end
 
 section ext
 
@@ -41,6 +100,122 @@ theorem ext_iff : m₁.g = m₂.g ↔ m₁ = m₂ :=
   by cases m₁; rcases m₂; simp
 
 @[extensionality] theorem ext : m₁.g = m₂.g → m₁ = m₂ := ext_iff.1
+
+@[extensionality]
+lemma m_ext {m₁ m₂ : matrix m n α}
+  (h : ∀i j, matrix_at m₁ i j = matrix_at m₂ i j) : m₁ = m₂ :=
+begin
+  let m₁' := @matrix_of_f m n _ m₁.1.1
+    (λx y, abs_data (vec_grid₀_of_dep_vec_grid m₁.1) ⟨⟨x.1, ⟨_, _⟩⟩, ⟨y.1, ⟨_, _⟩⟩⟩),
+  let m₂' := @matrix_of_f m n _ m₂.1.1
+    (λx y, abs_data (vec_grid₀_of_dep_vec_grid m₂.1) ⟨⟨x.1, ⟨_, _⟩⟩, ⟨y.1, ⟨_, _⟩⟩⟩),
+  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, {
+    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.rows, x.2]
+  },
+  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, {
+    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.cols, y.2]
+  },
+  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, {
+    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.rows, x.2]
+  },
+  swap 2, { simp [vec_grid₀_of_dep_vec_grid] },
+  swap 2, {
+    simp [vec_grid₀_of_dep_vec_grid, expand_gtr, grid.bl, relative_grid.cols, y.2]
+  },
+  have heq₁ : m₁ = m₁',
+    {
+      rcases m₁ with ⟨⟨h, ⟨d, hd⟩⟩⟩,
+      simp [m₁', matrix_of_f],
+      apply list.ext_le _ _,
+        {
+          simp [
+            length_generate_eq_size, hd, size, relative_grid.rows,
+            relative_grid.cols
+          ]
+        },
+        {
+          intros k h₁ h₂, rw nth_generate,
+          simp [
+            abs_data, relative_grid.cols, relpoint_of_gpoint, relative_grid.contents,
+            grid.bl, vec_grid₀_of_dep_vec_grid
+          ],
+          delta vec_grid₀_of_dep_vec_grid, simp [vector.nth],
+          congr, norm_cast, unfold_coes, simp [fin.val],
+          rw [
+            ← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add,
+            int.coe_nat_mul, int.coe_nat_div
+          ],
+          have : int.of_nat k % int.of_nat n ≥ (0 : ℤ), by norm_cast,
+          rw int.nat_abs_of_nonneg this, repeat { rw int.of_nat_eq_coe },
+          symmetry, rw [mul_comm, int.mod_add_div]
+        }
+    },
+  rw heq₁ at h,
+  have heq₂ : m₂ = m₂',
+    {
+      rcases m₂ with ⟨⟨h, ⟨d, hd⟩⟩⟩,
+      simp [m₂', matrix_of_f],
+      apply list.ext_le _ _,
+        {
+          simp [
+            length_generate_eq_size, hd, size, relative_grid.rows,
+            relative_grid.cols
+          ]
+        },
+        {
+          intros k h₁ h₂, rw nth_generate,
+          simp [
+            abs_data, relative_grid.cols, relpoint_of_gpoint, relative_grid.contents,
+            grid.bl, vec_grid₀_of_dep_vec_grid
+          ],
+          delta vec_grid₀_of_dep_vec_grid, simp [vector.nth],
+          congr, norm_cast, unfold_coes, simp [fin.val],
+          rw [
+            ← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add,
+            int.coe_nat_mul, int.coe_nat_div
+          ],
+          have : int.of_nat k % int.of_nat n ≥ (0 : ℤ), by norm_cast,
+          rw int.nat_abs_of_nonneg this, repeat { rw int.of_nat_eq_coe },
+          symmetry, rw [mul_comm, int.mod_add_div]
+        }
+    },
+  rw heq₂ at h,
+  simp [m₁', m₂'] at h,
+  delta vec_grid₀_of_dep_vec_grid at h,
+  rcases m₁ with ⟨⟨h₁, ⟨d₁, hd₁⟩⟩⟩, rcases m₂ with ⟨⟨h₂, ⟨d₂, hd₂⟩⟩⟩, simp at *,
+  simp [
+    abs_data, relpoint_of_gpoint, relative_grid.contents, grid.bl, expand_gtr,
+    vector.nth
+  ] at h,
+  apply list.ext_le _ _,
+    {simp [hd₁, hd₂]},
+    {
+      intros k hk₁ hk₂,
+      have eq₁ : k % n < n, by
+        apply nat.mod_lt; exact (gt_and_gt_of_mul_gt h₁).2,
+      have eq₂ : k / n < m, {
+        rw hd₁ at hk₁, rw nat.div_lt_iff_lt_mul, exact hk₁,
+        exact (gt_and_gt_of_mul_gt h₁).2
+      },
+      specialize h ⟨k / n, eq₂⟩ ⟨k % n, eq₁⟩,
+      revert h, rw ← option.some_inj, intros h,
+      repeat { rw ← list.nth_le_nth at h }, simp at h,
+      rw ← option.some_inj, repeat { rw ← list.nth_le_nth },
+      have : k % n + k / n * n = k,
+        {
+          rw [
+            mul_comm,
+            ← int.coe_nat_eq_coe_nat_iff, int.coe_nat_add, int.coe_nat_mod,
+            int.coe_nat_mul, int.coe_nat_div
+          ],
+          exact int.mod_add_div _ _
+        },
+      simp [this] at h, exact h
+    }
+end
 
 end ext
 
@@ -53,7 +228,7 @@ open relative_grid grid
 lemma matrix_nonempty {m₁ : matrix m n α} : m * n > 0 := m₁.1.1
 
 def matrix_string [has_to_string α] (m : matrix m n α) :=
-  grid_str m.g
+  grid_str (vec_grid₀_of_dep_vec_grid m.g)
 
 instance matrix_repr [has_to_string α] : has_repr (matrix m n α) :=
   ⟨matrix_string⟩
@@ -72,95 +247,25 @@ instance matrix_functor_law : is_lawful_functor (matrix m n) := {
 
 def m₁ : matrix 5 2 ℕ :=
   matrix.mk
-    (@dep_vec_grid₀.mk _ 5 2 dec_trivial
-                       ⟨[1, 3, 4, 5, 7, 8, 9, 10, 11, 12], dec_trivial⟩ ⟨5, 1⟩)
+    (@dep_vec_grid.mk _ 5 2 dec_trivial
+                       ⟨[1, 3, 4, 5, 7, 8, 9, 10, 11, 12], dec_trivial⟩)
 
 def m₂ : matrix 2 3 ℕ :=
   matrix.mk
-    (@dep_vec_grid₀.mk _ 2 3 dec_trivial
-                       ⟨[2, 2, 2, 2, 2, 2], dec_trivial⟩ ⟨0, 0⟩)
+    (@dep_vec_grid.mk _ 2 3 dec_trivial
+                      ⟨[2, 2, 2, 2, 2, 2], dec_trivial⟩)
 
 instance [has_add α] : has_add (matrix m n α) := {
   add := λm₁ m₂, ⟨
-    @dep_vec_grid₀.mk _ m n m₁.1.1 (vector.zip_with (+) m₁.1.2 m₂.1.2) ⟨0, 0⟩
+    @dep_vec_grid.mk _ m n m₁.1.1 (vector.zip_with (+) m₁.1.2 m₂.1.2)
   ⟩
 }
 
-def transpose (m₁ : matrix m n α) : matrix n m α :=
-  ⟨dep_vec_grid₀_of_fgrid₀
-    ⟨
-      n, m, mul_comm m n ▸ @matrix_nonempty _ _ _ m₁,
-      ⟨m₁.g.o.y, m₁.g.o.x⟩,
-      λx y, abs_data m₁.g ⟨y, x⟩
-    ⟩
-  ⟩
+def transpose {α} {m n} (m₁ : matrix m n α) : matrix n m α :=
+  matrix_of_f (by rw mul_comm; exact m₁.1.1) $ λi j, matrix_at m₁ j i
 
-theorem transpose_transpose_id (m₁ : matrix m n α) :
-  transpose (transpose m₁) = m₁ :=
-begin
-  rcases m₁ with ⟨h, data, p⟩,
-  unfold transpose, congr' 1,  unfold dep_vec_grid₀_of_fgrid₀, simp, split,
-    {
-      cases data with data hdata, congr,
-      apply list.ext_le _ _,
-        {
-          repeat { rw length_generate_eq_size },
-          simp [size, rows, cols, hdata]
-        },
-        {
-          intros i h₁ h₂, rw nth_le_generate_f₀,
-          simp [
-            abs_data_eq_nth_v₀', tl, bl, vector.nth_eq_nth_le, vector.to_list
-          ],
-          have : |↑i % ↑n| + n * |↑i / ↑n| < list.length data,
-            by rw [mul_comm, mod_add_div_coe]; exact h₂,
-          simp [length_generate_eq_size, size] at h₂,
-          have rpos : m > 0, from (gt_and_gt_of_mul_gt h).1,
-          have cpos : n > 0, from (gt_and_gt_of_mul_gt h).2,
-          have nltcr : i < m * n, by simp [rows, cols, *] at h₂; assumption,
-          have h₃ : ↑(i / n) < ↑m,
-            by rwa [int.coe_nat_lt_coe_nat_iff, nat.div_lt_iff_lt_mul _ _ cpos],
-          simp [dep_vec_grid₀_of_fgrid₀, abs_data, contents, vector.nth],
-          repeat { rw [← option.some_inj, ← list.nth_le_nth] },
-          simp [relpoint_of_gpoint, bl],
-          rw nth_generate_f₀,
-          simp [
-            abs_data_eq_nth_v₀', vector.nth_eq_nth_le, list.nth_le_nth this,
-            vector.to_list
-          ],
-          rw [← with_bot.some_eq_coe, ← list.nth_le_nth], 
-          congr,
-            {
-              have rnezero : m ≠ 0, by intros contra; rw contra at rpos; linarith,
-              rw ← int.coe_nat_eq_coe_nat_iff, simp,
-              repeat { rw int.nat_abs_of_nonneg; try { apply int.coe_zero_le } },
-              rw @int.add_mul_div_right _ _ m (by simpa),
-              norm_cast, rw nat.div_div_eq_div_mul, rw mul_comm n m,
-              simp[@nat.div_eq_of_lt i (m * n) nltcr],
-              norm_cast,
-              have h₄ : (0 : ℤ) ≤ ↑(i / n), by simp,
-              rw @int.mod_eq_of_lt ↑(i / n) ↑m h₄ h₃, rw mul_comm,
-              apply int.mod_add_div
-            },
-            {
-              rw length_generate_eq_size, simp [size, cols, rows],
-              rw [add_comm],
-              have h₄ : |↑i / ↑n| < m, by norm_cast at *; exact h₃,
-              have h₅ : |↑i % ↑n| < n,
-                begin
-                  rw [← int.coe_nat_lt_coe_nat_iff, int.nat_abs_of_nonneg],
-                  apply @int.mod_lt_of_pos ↑i ↑n (by norm_cast; exact cpos),
-                  have cnezero : n ≠ 0, by intros contra; rw contra at cpos; linarith,
-                  exact int.mod_nonneg _ (by simp [cnezero])
-                end,
-              exact linearize_array h₄ h₅
-            }
-        }
-    },
-    {
-      cases p, refl
-    }  
-end
+theorem transpose_transpose_eq_self (A : matrix m n α) :
+  transpose (transpose A) = A := by ext; simp [transpose]
 
 end operations
 

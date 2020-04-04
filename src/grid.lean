@@ -7,7 +7,7 @@
 -- 'vec_grid' and its absolutely-indexed counterpart 'vec_grid₀' represent
 -- a homogeneous vector-based implementation.
 
--- 'dep_vec_grid₀' is identical to 'vec_grid₀' but uses dependent indices
+-- 'dep_vec_grid' is identical to 'vec_grid' but uses dependent indices
 -- for its rows and columns
 
 -- absolutely-indexed 'fgrid₀' represents
@@ -360,10 +360,9 @@ structure fgrid₀ (α : Type) :=
   (contents : bounded o.y (o.y + r) → bounded o.x (o.x + c) → α)
 
 -- Absolute vector-based grid concrete instance with dependent size.
-structure dep_vec_grid₀ (α : Type) (r : ℕ) (c : ℕ) :=
+structure dep_vec_grid (α : Type) (r : ℕ) (c : ℕ) :=
   (h : r * c > 0)
   (contents : vector α (r * c))
-  (o : point)
 
 end grid_impls
 
@@ -470,7 +469,7 @@ instance ag_fgrid₀ {α : Type} :
   }
 
 instance rg_dep_fgrid₀ {α : Type} {r c : ℕ} :
-  relative_grid (dep_vec_grid₀ α r c) := {
+  relative_grid (dep_vec_grid α r c) := {
     carrier  := α,
     rows     := λ_, r,
     cols     := λ_, c,
@@ -483,10 +482,10 @@ instance rg_dep_fgrid₀ {α : Type} {r c : ℕ} :
       ⟩
 }
 
-instance ag_dep_vec_grid₀ {α : Type} {r c : ℕ} :
-  grid (dep_vec_grid₀ α r c) := {
-    bl := λg, g.o
-  }
+-- instance ag_dep_vec_grid₀ {α : Type} {r c : ℕ} :
+--   grid (dep_vec_grid₀ α r c) := {
+--     bl := λg, g.o
+--   }
 
 def point_of_grid_point {α : Type*} [grid α] {g : α} : grid_point g → point
   | ⟨b₁, b₂⟩ := ⟨b₂, b₁⟩
@@ -794,12 +793,12 @@ instance fgrid₀_functor_law : is_lawful_functor fgrid₀ := {
   comp_map := λα β γ f h ⟨r, c, h, d, o⟩, by simp [(<$>)]
 }
 
-instance dep_vec_grid₀_functor {m n} : functor (λt, dep_vec_grid₀ t m n) := {
+instance dep_vec_grid₀_functor {m n} : functor (λt, dep_vec_grid t m n) := {
   map := λα β f g, {g with contents := vector.map f g.contents}
 }
 
 instance dep_vec_grid₀_functor_law {m n} :
-  is_lawful_functor (λt, dep_vec_grid₀ t m n) := {
+  is_lawful_functor (λt, dep_vec_grid t m n) := {
   id_map := λα ⟨r, c, h⟩, by simp [(<$>)],
   comp_map := λα β γ f h ⟨r, c, h⟩, by simp [(<$>)]
 }
@@ -958,11 +957,11 @@ def vec_grid₀_of_fgrid₀ {α : Type} (g : fgrid₀ α) : vec_grid₀ α :=
 def fgrid₀_of_vec_grid₀ {α : Type} (g : vec_grid₀ α) : fgrid₀ α :=
   {g with contents := λx y, abs_data g ⟨x, y⟩}
 
-def dep_vec_grid₀_of_fgrid₀ {α : Type} (g : fgrid₀ α) : dep_vec_grid₀ α g.r g.c :=
+def dep_vec_grid₀_of_fgrid₀ {α : Type} (g : fgrid₀ α) : dep_vec_grid α g.r g.c :=
   {g with contents := ⟨℘ g, length_generate_eq_size _⟩}
 
-def vec_grid₀_of_dep_vec_grid₀ {m n} {α : Type} (g : dep_vec_grid₀ α m n) : vec_grid₀ α :=
-  ⟨⟨m, n, g.1, g.2⟩, g.3⟩
+def vec_grid₀_of_dep_vec_grid {m n} {α : Type} (g : dep_vec_grid α m n) : vec_grid₀ α :=
+  ⟨⟨m, n, g.1, g.2⟩, ⟨0, 0⟩⟩
 
 instance f₀_v₀_coe {α : Type} : has_coe (fgrid₀ α) (vec_grid₀ α) := ⟨vec_grid₀_of_fgrid₀⟩
 instance v₀_f₀_coe {α : Type} : has_coe (vec_grid₀ α) (fgrid₀ α) := ⟨fgrid₀_of_vec_grid₀⟩
@@ -979,9 +978,9 @@ attribute [simp]
 lemma vec_grid₀_of_fgrid₀_o {α : Type} {g : fgrid₀ α} :
   (vec_grid₀_of_fgrid₀ g).o = g.o := by simp [vec_grid₀_of_fgrid₀]
 
-attribute [simp]
-lemma dep_vec_grid₀_of_fgrid₀_o {α : Type} {g : fgrid₀ α} :
-  (dep_vec_grid₀_of_fgrid₀ g).o = g.o := by simp [dep_vec_grid₀_of_fgrid₀]
+-- attribute [simp]
+-- lemma dep_vec_grid₀_of_fgrid₀_o {α : Type} {g : fgrid₀ α} :
+--   (dep_vec_grid₀_of_fgrid₀ g).o = g.o := by simp [dep_vec_grid₀_of_fgrid₀]
 
 attribute [simp]
 lemma fgrid₀_of_vec_grid₀_r {α : Type} {g : vec_grid₀ α} :
@@ -1614,14 +1613,6 @@ theorem grid_eq_ext_f₀_v₀ {α : Type} {g₁ : fgrid₀ α} {g₂ : vec_grid�
   (hcols : g₁.c = g₂.c)
   (horig : g₁.o = g₂.o) : ℘ g₁ = ℘ g₂ → g₁ = g₂ :=
   (grid_eq_iff_f₀_v₀ hrows hcols horig).2
-
-attribute [extensionality]
-theorem grid_eq_ext_f₀_dv₀ {m n} {α : Type}
-  {g₁ : fgrid₀ α} {g₂ : dep_vec_grid₀ α m n}
-  (hrows : g₁.r = m)
-  (hcols : g₁.c = n)
-  (horig : g₁.o = g₂.o) : g₁ = g₂ :=
-  -- (grid_eq_iff_f₀_v₀ hrows hcols horig).2
 
 lemma nth_vecgrid_of_fgrid {α : Type} {g : fgrid₀ α} {n} :
   list.nth (vec_grid₀_of_fgrid₀ g).contents.val n = list.nth (℘ g) n :=
